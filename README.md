@@ -1,8 +1,16 @@
-# DARTS
+<div align="center">
 
----
+### ACM Transactions on Graphics 2024
+### (SIGGRAPH Asia 2024 Journal Track)
 
-> [He Q](https://github.com/Enigmatisms), [Du D](https://github.com/dongyu-du), Jiang H, et al. DARTS: Diffusion Approximated Residual Time Sampling for Time-of-flight Rendering in Homogeneous Scattering Media[J]. ACM Transactions on Graphics (TOG), 2024, 43(6): 1-14.
+## <a href="https://dl.acm.org/doi/10.1145/3687930">🎯 DARTS: Diffusion Approximated Residual Time Sampling for Time-of-flight Rendering in Homogeneous Scattering Media</a>
+
+[Qianyue He](https://github.com/Enigmatisms), [Dongyu Du](https://dongyu-du.github.io/), [Haitian Jiang](https://github.com/Enigmatisms/DARTS), [Xin Jin*](https://scholar.google.com.hk/citations?user=FTikW50AAAAJ&hl=zh-CN&oi=sra)
+
+[![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://darts-paper.github.io/DARTS-proj-page/)
+[![Paper PDF](https://img.shields.io/badge/Paper-PDF-red.svg)](https://dl.acm.org/doi/10.1145/3687930)
+[![Code License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Enigmatisms/DARTS?tab=MIT-1-ov-file#readme)
+</div>
 
 The code is composed of two renderers:
 
