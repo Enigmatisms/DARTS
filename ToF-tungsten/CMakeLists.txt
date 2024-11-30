@@ -1,0 +1,270 @@
+cmake_minimum_required(VERSION 3.10)
+
+if(DEFINED ENV{VCPKG_ROOT} AND NOT DEFINED CMAKE_TOOLCHAIN_FILE)
+  set(CMAKE_TOOLCHAIN_FILE "$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+      CACHE STRING "")
+endif()
+
+project(Tungsten)
+
+set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+# TODO: delete all CXX11 code because we are enabling C++17 in a new way.
+include(CXX11)
+check_for_cxx11_compiler(CXX11_COMPILER)
+
+if(CXX11_COMPILER)
+    enable_cxx11()
+else()
+    message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} seems to have no C++11 support. Please try again with a more recent compiler version.")
+endif()
+
+# HACK: enable C++ 17
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+# AVX does not do much benefit at the moment, but breaks compilation on some platforms.
+# Disabled for now until AVX becomes important enough to reconsider.
+SET(EMBREE_MAX_ISA "SSE4.2" CACHE STRING "Selects highest ISA to support.")
+set(USE_AVX FALSE CACHE BOOL "Use AVX.")
+set(USE_AVX2 FALSE CACHE BOOL "Use AVX2.")
+
+include(OptimizeForArchitecture)
+OptimizeForArchitecture()
+
+if (MSVC)
+    # Needed by MSVC, but not added by OptimizeForArchitexture()
+    add_definitions(-D__SSE__)
+    # enable /MP flag for multithreaded compiling
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    message("${CMAKE_CXX_FLAGS}")
+endif()
+
+add_definitions(-DINSTALL_PREFIX="${CMAKE_INSTALL_PREFIX}")
+
+if (USE_AVX)
+    message(STATUS "Compiling with AVX support")
+    set(__AVX__ 1)
+elseif (USE_SSE4_2)
+    message(STATUS "Compiling with SSE4.2 support")
+elseif (USE_SSSE3)
+    message(STATUS "Compiling with SSE3 support")
+else()
+    message(FATAL_ERROR "The target machine does not support SSE3. At least SSE3 is required")
+endif()
+
+if (MSVC)
+    add_definitions(-DCONSTEXPR=const -DNOMINMAX -D_CRT_SECURE_NO_WARNINGS)
+else()
+    add_definitions(-DCONSTEXPR=constexpr)
+endif()
+
+IF(COMMAND cmake_policy)
+  if (POLICY CMP0043)
+    cmake_policy(SET CMP0043 NEW)
+  endif()
+ENDIF(COMMAND cmake_policy)
+
+foreach(flag ${Vc_ARCHITECTURE_FLAGS})
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${flag}")
+endforeach()
+
+set(EMBREE_STATIC_LIB ON CACHE BOOL "Build Embree as a static library." FORCE)
+set(EMBREE_ISPC_SUPPORT OFF CACHE BOOL "Build Embree with support for ISPC applications." FORCE)
+set(EMBREE_TUTORIALS OFF CACHE BOOL "Enable to build Embree tutorials" FORCE)
+set(EMBREE_STAT_COUNTERS OFF CACHE BOOL "Enables statistic counters." FORCE)
+set(EMBREE_RAY_MASK OFF CACHE BOOL "Enables ray mask support." FORCE)
+set(EMBREE_BACKFACE_CULLING OFF CACHE BOOL "Enables backface culling." FORCE)
+set(EMBREE_INTERSECTION_FILTER ON CACHE BOOL "Enables intersection filter callback." FORCE)
+set(EMBREE_INTERSECTION_FILTER_RESTORE ON CACHE BOOL "Restores previous hit when hit is filtered out." FORCE)
+set(EMBREE_TASKING_SYSTEM "INTERNAL" CACHE STRING "Selects tasking system" FORCE)
+set(EMBREE_STATIC_RUNTIME OFF CACHE BOOL "Use the static version of the C/C++ runtime library." FORCE)
+add_subdirectory(src/thirdparty/embree)
+add_definitions(-DEMBREE_STATIC_LIB=1)
+
+add_definitions(-DRAPIDJSON_HAS_STDSTRING=1)
+add_definitions(-DSTBI_NO_STDIO=1)
+add_definitions(-DLODEPNG_NO_COMPILE_DISK=1)
+add_definitions(-DUSE_IPV6=1)
+add_library(thirdparty STATIC
+		src/thirdparty/civetweb/civetweb.c
+		src/thirdparty/lodepng/lodepng.cpp
+		src/thirdparty/sobol/sobol.cpp
+		src/thirdparty/stbi/stb_image.c
+		src/thirdparty/miniz/miniz.c
+		src/thirdparty/skylight/ArHosekSkyModel.cpp
+		src/thirdparty/tribox/tribox.cpp)
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+    set(CXX_WARNINGS "-Wall -Wextra -Wpointer-arith -Wcast-align -fstrict-aliasing -Wno-unused-local-typedefs -Wno-misleading-indentation -Wno-maybe-uninitialized -Wno-int-in-bool-context -Wno-implicit-fallthrough -Wno-class-memaccess")
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${CXX_WARNINGS} -fvisibility-inlines-hidden -mfma -mavx2 -msse4.1 -static-libstdc++")
+    message(STATUS "SSE 4.1 and AVX2 are used!")
+endif()
+set(core_libs core thirdparty embree)
+
+include_directories(src/core src/thirdparty src/thirdparty/embree/include src)
+
+find_package(Eigen3)
+if (EIGEN3_FOUND)
+    include_directories(${EIGEN3_INCLUDE_DIR})
+    message(STATUS "Eigen3 detected. denoiser will be built")
+else()
+    message(STATUS "No Eigen3 detected. denoiser will not be built")
+endif()
+
+if (DEFINED VCPKG_TARGET_TRIPLET)
+    # using vcpkg to find OpenEXR
+    # temporally remove ./cmake from module path so we won't trigger FindOpenEXR.cmake
+    list(REMOVE_ITEM CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+
+    find_package(IlmBase CONFIG)
+    find_package(OpenEXR CONFIG)
+    if (NOT OPENEXR_FOUND OR NOT ILMBASE_FOUND)
+        set(OPENEXR_FOUND FALSE CACHE BOOL "" FORCE)
+    else()
+        find_path(OPENEXR_ACTUAL_INCLUDE_DIR ImfRgbaFile.h PATH_SUFFIXES OpenEXR PATHS ${OPENEXR_INCLUDE_DIR})
+        if (MSVC)
+            add_definitions(-DOPENEXR_DLL)
+        endif()
+    endif()
+
+    set(CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+else()
+    # using FindOpenEXR.cmake to find OpenEXR
+    find_package(OpenEXR)
+    if (OPENEXR_FOUND)
+        set(OPENEXR_ACTUAL_INCLUDE_DIR ${OPENEXR_INCLUDE_DIR})
+    endif()
+endif()
+
+if (OPENEXR_FOUND)
+    message(STATUS "OpenEXR detected. Building with .exr support")
+    add_definitions(-DOPENEXR_AVAILABLE)
+    include_directories(${OPENEXR_ACTUAL_INCLUDE_DIR})
+    set(core_libs ${core_libs} ${OPENEXR_LIBRARIES} ${ILMBASE_LIBRARIES})
+else()
+    message(STATUS "No OpenEXR detected. Building without .exr support")
+endif()
+
+find_package(JPEG)
+if (JPEG_FOUND)
+    message(STATUS "JPEG library detected.")
+    add_definitions(-DJPEG_AVAILABLE)
+    include_directories(${JPEG_INCLUDE_DIR})
+    set(core_libs ${core_libs} ${JPEG_LIBRARIES})
+else()
+    message(STATUS "No JPEG library detected. Falling back to stb_image JPG decoder")
+endif()
+
+find_package(OpenVDB)
+find_package(TBB)
+if (OPENEXR_FOUND AND OPENVDB_FOUND AND TBB_FOUND)
+    message(STATUS "OpenVDB detected. Building with .vdb support")
+    add_definitions(-DOPENVDB_AVAILABLE)
+    add_definitions(-DOPENVDB_3_ABI_COMPATIBLE)
+    include_directories(${OPENVDB_INCLUDE_DIR})
+    set(core_libs ${core_libs} ${OPENVDB_LIBRARIES} ${TBB_LIBRARIES})
+else()
+    if (NOT OPENVDB_FOUND)
+        message(STATUS "No OpenVDB detected. Building without .vdb support")
+    elseif(NOT OPENEXR_FOUND)
+        message(STATUS "No OpenEXR libraries detected. Building without .vdb support")
+    else()
+        message(STATUS "No TBB detected. Building without .vdb support")
+    endif()
+endif()
+
+file(GLOB_RECURSE Core_SOURCES "src/core/*.cpp")
+add_library(core STATIC ${Core_SOURCES})
+
+add_executable(obj2json src/obj2json/obj2json.cpp)
+target_link_libraries(obj2json ${core_libs})
+
+add_executable(json2xml src/json2xml/json2xml.cpp)
+target_link_libraries(json2xml ${core_libs})
+
+add_executable(scenemanip src/scenemanip/scenemanip.cpp)
+target_link_libraries(scenemanip ${core_libs})
+
+add_executable(hdrmanip src/hdrmanip/hdrmanip.cpp)
+target_link_libraries(hdrmanip ${core_libs})
+
+if (EIGEN3_FOUND)
+    file(GLOB_RECURSE denoiser_SOURCES "src/denoiser/*.cpp")
+    add_executable(denoiser ${denoiser_SOURCES})
+    target_link_libraries(denoiser ${core_libs})
+endif()
+
+add_executable(tungsten src/tungsten/tungsten.cpp)
+target_link_libraries(tungsten ${core_libs})
+
+if (WIN32)
+    set(socket_libs wsock32 Ws2_32)
+    # we4002, we4003: set too many arguments and too few arguments in macro to error
+    # we4715: not all control paths return a value
+    target_compile_options(core PRIVATE /we4002 /we4003 /we4715)
+else()
+    set(socket_libs "")
+endif()
+
+add_executable(tungsten_server src/tungsten-server/tungsten-server.cpp)
+target_link_libraries(tungsten_server ${core_libs} ${socket_libs})
+
+set(executables obj2json json2xml scenemanip hdrmanip tungsten tungsten_server)
+if (EIGEN3_FOUND)
+    set(executables ${executables} denoiser)
+endif()
+set(data_dirs example-scenes materialtest mc-loader)
+
+find_package(OpenGL)
+find_package(Qt5Widgets)
+find_package(Qt5OpenGL)
+if (OPENGL_FOUND AND Qt5Widgets_FOUND)
+    include_directories(${OPENGL_INCLUDE_DIR})
+    set(opengl_libs ${OPENGL_LIBRARIES})
+
+    file(GLOB_RECURSE Editor_SOURCES "src/editor/*.cpp")
+    if (APPLE)
+        list(APPEND Editor_SOURCES "src/editor/CoreProfileAttributes.mm")
+    endif()
+    add_executable(editor ${Editor_SOURCES} src/editor/resources/Tungsten.rc)
+    set_target_properties(editor PROPERTIES AUTOMOC TRUE)
+    qt5_use_modules(editor Widgets OpenGL)
+    target_link_libraries(editor ${core_libs} ${opengl_libs} Qt5::Widgets Qt5::OpenGL)
+    if (APPLE)
+        find_library(APPKIT NAMES AppKit)
+        target_link_libraries(editor ${APPKIT})
+    endif()
+    message(STATUS "Building editor")
+
+    set(data_dirs ${data_dirs} editor shaders)
+    set(executables ${executables} editor)
+else()
+    if (NOT Qt5Widgets_FOUND)
+        message(STATUS "Qt5 not found. Editor will not be built")
+    endif()
+    if (NOT OPENGL_FOUND)
+        message(STATUS "OpenGL not found. Editor will not be built")
+    endif()
+endif()
+
+if (WIN32)
+    set(data_prefix "data")
+else()
+    set(data_prefix "share/tungsten")
+endif()
+
+foreach (data_dir ${data_dirs})
+    install(DIRECTORY data/${data_dir} DESTINATION ${data_prefix})
+    file(GLOB_RECURSE data_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}/data "data/${data_dir}/*")
+    foreach (data ${data_files})
+        configure_file(data/${data} ${CMAKE_CURRENT_BINARY_DIR}/${data_prefix}/${data} COPYONLY)
+    endforeach(data)
+endforeach()
+
+if (WIN32)
+    install(TARGETS ${executables} DESTINATION .)
+else()
+    install(TARGETS ${executables} DESTINATION bin)
+endif()

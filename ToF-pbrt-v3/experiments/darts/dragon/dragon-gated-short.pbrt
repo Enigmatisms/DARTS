@@ -1,0 +1,141 @@
+LookAt -2.12983 0.246694 -2.0207  2 0 4   0 1 0
+Camera "perspective"
+    "float fov" [ 42.2121 ]
+
+Integrator "volpath" "integer maxdepth" [180] "float rrthreshold" [0.0] "integer rseed_time" [1] "integer logTime" [1]
+    "integer guiding" [1] "bool da_guide" "true" "integer time_sample" [1] "integer use_truncate" [0] "integer extra_nee_nums" [0] "bool fuse_origin" ["false"]
+Sampler "random"
+    "integer pixelsamples" [ 6000 ]
+
+Film "image"
+    "string filename" [ "dragon.exr" ]
+    "integer yresolution" [ 960 ]
+    "integer xresolution" [ 960 ]
+    "float tmin_time" [4.1]
+    "float t_interval" [0.05]
+    "integer t_samplecnt" [1]
+
+Accelerator "bvh"
+
+MakeNamedMedium "mymedium" "string type" "guided_homo" "rgb sigma_s" [1.0 1.0 1.0] "rgb sigma_a" [0.005 0.005 0.005] "float g" [-0.0] "bool use_elliptical_phase" "false"
+MediumInterface "" "mymedium"
+
+WorldBegin
+
+LightSource "point" "rgb I" [800. 800. 800.] "point from" [0.419116 0.477773 0.048212]
+
+AttributeBegin
+    Material "none"
+    MediumInterface "mymedium" ""
+    Shape "plymesh"
+        "string filename" [ "ply/scatter-cube.ply" ]
+AttributeEnd
+
+Texture "wood" "spectrum" "imagemap"
+    "bool trilinear" "true"
+    "string filename" [ "textures/walnut.tga" ]
+
+Texture "siggraph" "spectrum" "imagemap"
+    "bool trilinear" "true"
+    "string filename" [ "textures/sig.tga" ]
+
+Texture "cam-man" "spectrum" "imagemap"
+    "bool trilinear" "true"
+    "string filename" [ "textures/camera-man.tga" ]
+
+Texture "floor" "spectrum" "imagemap"
+    "bool trilinear" "true"
+    "string filename" [ "textures/floor.tga" ]
+
+MakeNamedMaterial "wall-diffuse"
+    "string type" [ "matte" ]
+    "rgb Kd" [0.87 0.84 0.81]
+
+MakeNamedMaterial "sig-image"
+    "string type" [ "matte" ]
+    "texture Kd" [ "siggraph" ]
+
+MakeNamedMaterial "cam-man-image"
+    "string type" [ "matte" ]
+    "texture Kd" [ "cam-man" ]
+
+MakeNamedMaterial "floor"
+    "string type" [ "matte" ]
+    "texture Kd" [ "floor" ]
+
+MakeNamedMaterial "top-base"
+    "string type" [ "metal" ]
+    "string metal_type" [ "silver" ]
+    "rgb k" [4.8283433224 3.1222459278 2.1469504455f]
+    "rgb eta" [0.1552646489f 0.1167232965f 0.1383806959]
+    "bool remaproughness" "false"
+    "float roughness" [0.05]
+
+MakeNamedMaterial "wooden-matte"
+    "string type" [ "matte" ]
+    "texture Kd" [ "wood" ]
+
+# this is Ag
+MakeNamedMaterial "mirror-frame"
+    "string type" [ "metal" ]
+    "string metal_type" [ "silver" ]
+    "rgb k" [4.8283433224 3.1222459278 2.1469504455f]
+    "rgb eta" [0.1552646489f 0.1167232965f 0.1383806959]
+    "bool remaproughness" "false"
+    "float roughness" [0.2]
+
+# this is Au
+MakeNamedMaterial "dragon"
+    "string type" [ "metal" ]
+    "string metal_type" [ "gold" ]
+    "rgb k" [3.9831604247 2.3857207478 1.6032152899]
+    "rgb eta" [0.1431189557 0.3749570432 1.4424785571]
+    "bool remaproughness" "false"
+    "float roughness" [0.1]
+
+MakeNamedMaterial "blockage"
+    "string type" [ "matte" ]
+    "rgb Kd" [0.9 0.9 0.9]
+
+MakeNamedMaterial "dark"
+    "string type" [ "matte" ]
+    "rgb Kd" [0.1 0.1 0.1]
+
+NamedMaterial "blockage"
+Shape "plymesh"
+    "string filename" [ "ply/blockage.ply" ]
+NamedMaterial "wooden-matte"
+Shape "plymesh"
+    "string filename" [ "ply/bottom-base.ply" ]
+NamedMaterial "cam-man-image"
+Shape "plymesh"
+    "string filename" [ "ply/cam-man-drawing.ply" ]
+NamedMaterial "dragon"
+Shape "plymesh"
+    "string filename" [ "ply/dragon.ply" ]
+NamedMaterial "floor"
+Shape "plymesh"
+    "string filename" [ "ply/floor.ply" ]
+NamedMaterial "wooden-matte"
+Shape "plymesh"
+    "string filename" [ "ply/mid-base.ply" ]
+NamedMaterial "mirror-frame"
+Shape "plymesh"
+    "string filename" [ "ply/mirror-frame.ply" ]
+Material "mirror"
+Shape "plymesh"
+    "string filename" [ "ply/mirror.ply" ]
+NamedMaterial "sig-image"
+Shape "plymesh"
+    "string filename" [ "ply/sig-drawing.ply" ]
+NamedMaterial "top-base"
+Shape "plymesh"
+    "string filename" [ "ply/top-base.ply" ]
+NamedMaterial "wall-diffuse"
+Shape "plymesh"
+    "string filename" [ "ply/walls.ply" ]
+NamedMaterial "dark"
+Shape "plymesh"
+    "string filename" [ "ply/other-walls.ply" ]
+
+WorldEnd

@@ -1,0 +1,272 @@
+{
+    "media": [
+        {
+            "name": "gas",
+            "phase_function": {
+                "type": "isotropic"
+            },
+            "max_bounces": 120,
+            "type": "guided_homo",
+            "sigma_s": 0.15,
+            "sigma_a": 0.005,
+            "speed_of_light": 1.0
+        }
+    ],
+    "bsdfs": [
+        {
+            "name": "light",
+            "albedo": 1,
+            "type": "null"
+        },
+        {
+            "name": "matte",
+            "albedo": [
+                0.7411765,
+                0.7411765,
+                0.7411765
+            ],
+            "type": "lambert"
+        }
+    ],
+    "primitives": [
+        {
+            "name": "scatter",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/scatter.wo3",
+            "int_medium": "gas",
+            "bsdf": {
+                "albedo": 1,
+                "type": "forward"
+            }
+        },
+        {
+            "name": "cbox_back.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_back.001.wo3",
+            "bsdf": "matte"
+        },
+        {
+            "name": "cbox_ceiling.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_ceiling.001.wo3",
+            "bsdf": "matte"
+        },
+        {
+            "name": "cbox_floor.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_floor.001.wo3",
+            "bsdf": "matte"
+        },
+        {
+            "name": "cbox_greenwall.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_greenwall.001.wo3",
+            "bsdf": {
+                "albedo": [
+                    0.14509805,
+                    0.8666667,
+                    0.14509805
+                ],
+                "type": "lambert"
+            }
+        },
+        {
+            "name": "cbox_largebox.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_largebox.001.wo3",
+            "bsdf": "matte"
+        },
+        {
+            "name": "cbox_redwall.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_redwall.001.wo3",
+            "bsdf": {
+                "albedo": [
+                    0.8666667,
+                    0.14509805,
+                    0.14509805
+                ],
+                "type": "lambert"
+            }
+        },
+        {
+            "name": "cbox_smallbox.001",
+            "transform": {
+                "scale": [
+                    1,
+                    1,
+                    1
+                ]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": true,
+            "file": "./meshes/cbox_smallbox.001.wo3",
+            "bsdf": {
+                "albedo": [
+                    0.7372549,
+                    0.7372549,
+                    0.7372549
+                ],
+                "type": "lambert"
+            }
+        },
+        {
+            "name": "light",
+            "transform": {
+                "position": [
+                    2.779,
+                    4.8,
+                    2.4
+                ]
+            },
+            "emission": [
+                1000,
+                1000,
+                1000
+            ],
+            "ext_medium": "gas",
+            "type": "point",
+            "bsdf": "light"
+        }
+    ],
+    "camera": {
+        "tonemap": "linear",
+        "resolution": [
+            512,
+            512
+        ],
+        "reconstruction_filter": "box",
+        "transform": {
+            "position": [
+                2.78,
+                2.73,
+                -8.0
+            ],
+            "look_at": [
+                2.78,
+                2.73,
+                0
+            ],
+            "up": [
+                0,
+                1,
+                0
+            ]
+        },
+        "medium": "gas",
+        "type": "pinhole",
+        "fov": 39.3077
+    },
+    "integrator": {
+        "type": "progressive_transient_photon_map",
+        "include_surfaces": true,
+        "volume_photon_type": "points",
+        "low_order_scattering": true,
+        "min_bounces": 0,
+        "max_bounces": 120,
+        "enable_consistency_checks": true,
+        "enable_two_sided_shading": true,
+        "gather_radius": 0.05,
+        "photon_count": 600000,
+        "volume_photon_count": 40000,
+        "gather_photon_count": 20,
+        "alpha": 0.7,
+        "volume_alpha": 0.8,
+        "fixed_volume_radius": true,
+        "volume_gather_radius": 0.1,
+        "transient_time_center": 16.150000000000002,
+        "transient_time_width": 0.1,
+        "delta_time_gate": false,
+        "exclude_non_mis": false,
+        "use_grid": false,
+        "enable_guiding": true,
+        "strict_time_width": true,
+        "enable_elliptical": true
+    },
+    "renderer": {
+        "output_file": "./img/TungstenRender.png",
+        "hdr_output_file": "test.pfm",
+        "resume_render_file": "TungstenRenderState.dat",
+        "overwrite_output_files": false,
+        "adaptive_sampling": false,
+        "enable_resume_render": false,
+        "stratified_sampler": false,
+        "scene_bvh": true,
+        "spp": 10000,
+        "spp_step": 1,
+        "checkpoint_interval": "1000",
+        "timeout": "1.0"
+    }
+}

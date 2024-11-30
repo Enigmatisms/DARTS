@@ -1,0 +1,291 @@
+{
+    "media": [
+        {
+            "name": "gas",
+            "phase_function": {
+                "type": "isotropic"
+            },
+            "max_bounces": 180,
+            "type": "homogeneous",
+            "sigma_s": 1.0,
+            "sigma_a": 0.005,
+            "speed_of_light": 1.0
+        }
+    ],
+    "bsdfs": [
+        {
+            "name": "wall-diffuse",
+            "albedo": [0.87, 0.84, 0.81],
+            "type": "lambert"
+        },
+        {
+            "name": "sig-image",
+            "albedo": "textures/sig.tga",
+            "type": "lambert"
+        },
+        {
+            "name": "cam-man-image",
+            "albedo": "textures/camera-man.tga",
+            "type": "lambert"
+        },
+        {
+            "name": "Floor",
+            "albedo": "textures/floor.tga",
+            "type": "lambert"
+        },
+        {
+            "name": "top-base",
+            "albedo": 1.0,
+            "type": "rough_conductor",
+            "distribution": "pbrt-ggx",
+            "roughness": 0.05,
+            "material": "Ag"
+        },
+        {
+            "name": "wooden",
+            "albedo": "textures/walnut.tga",
+            "type": "lambert"
+        },
+        {
+            "name": "mirror-frame",
+            "albedo": 1.0,
+            "type": "rough_conductor",
+            "distribution": "pbrt-ggx",
+            "roughness": 0.2,
+            "material": "Ag"
+        },
+        {
+            "name": "Mirror",
+            "albedo": 0.9,
+            "type": "mirror"
+        },
+        {
+            "name": "dragon",
+            "albedo": 1.0,
+            "type": "rough_conductor",
+            "distribution": "pbrt-ggx",
+            "roughness": 0.1,
+            "material": "Au"
+        },
+        {
+            "name": "blockage",
+            "albedo": 0.9,
+            "type": "lambert"
+        },
+        {
+            "name": "dark",
+            "albedo": 0.1,
+            "type": "lambert"
+        }
+    ],
+    "primitives": [
+        {
+            "name": "scattering",
+            "transform": {
+                "scale": [1, 1, 1]
+            },
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "./models/scatter-cube.wo3",
+            "int_medium": "gas",
+            "bsdf": {
+                "albedo": 1,
+                "type": "forward"
+            }
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/blockage.wo3",
+            "ext_medium": "gas",
+            "bsdf": "blockage"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/bottom-base.wo3",
+            "ext_medium": "gas",
+            "bsdf": "wooden"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/cam-man-drawing.wo3",
+            "ext_medium": "gas",
+            "bsdf": "cam-man-image"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": true,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/dragon.wo3",
+            "ext_medium": "gas",
+            "bsdf": "dragon"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/floor.wo3",
+            "ext_medium": "gas",
+            "bsdf": "Floor"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/mid-base.wo3",
+            "ext_medium": "gas",
+            "bsdf": "wooden"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/mirror-frame.wo3",
+            "ext_medium": "gas",
+            "bsdf": "mirror-frame"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/mirror.wo3",
+            "ext_medium": "gas",
+            "bsdf": "Mirror"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/sig-drawing.wo3",
+            "ext_medium": "gas",
+            "bsdf": "sig-image"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/top-base.wo3",
+            "ext_medium": "gas",
+            "bsdf": "top-base"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/walls.wo3",
+            "ext_medium": "gas",
+            "bsdf": "wall-diffuse"
+        },
+        {
+            "transform": {},
+            "type": "mesh",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "file": "models/other-walls.wo3",
+            "ext_medium": "gas",
+            "bsdf": "dark"
+        },
+        {
+            "name": "light",
+            "ext_medium": "gas",
+            "transform": {
+                "position": [
+                    0.419116, 0.477773, 0.048212
+                ]
+            },
+            "emission": [
+                800, 800, 800
+            ],
+            "type": "point"
+        }
+    ],
+    "camera": {
+        "tonemap": "linear",
+        "resolution": [
+            960,
+            960
+        ],
+        "reconstruction_filter": "box",
+        "transform": {
+            "position": [
+                -2.12983, 0.246694, -2.0207
+            ],
+            "look_at": [2, 0, 4],
+            "up": [
+                0.0,
+                1.0,
+                0.0
+            ]
+        },
+        "medium": "gas",
+        "type": "pinhole",
+        "fov": 42.2121
+    },
+    "integrator": {
+        "type": "progressive_transient_photon_map",
+        "include_surfaces": true,
+        "volume_photon_type": "points",
+        "low_order_scattering": true,
+        "min_bounces": 0,
+        "max_bounces": 180,
+        "enable_consistency_checks": true,
+        "enable_two_sided_shading": true,
+        "gather_radius": 0.15,
+        "photon_count": 7e6,
+        "volume_photon_count": 2e5,
+        "gather_photon_count": 20,
+        "alpha": 0.7,
+        "volume_alpha": 0.7,
+        "fixed_volume_radius": true,
+        "volume_gather_radius": 0.3,
+        "transient_time_center" : 4.125,
+        "transient_time_width" : 0.05,
+        "delta_time_gate": false,
+        "exclude_non_mis": false,
+        "use_grid": false
+    },
+    "renderer": {
+        "output_file": "TungstenRender.png",
+        "hdr_output_file": "TungstenRender.pfm",
+        "resume_render_file": "TungstenRenderState.dat",
+        "overwrite_output_files": false,
+        "adaptive_sampling": false,
+        "enable_resume_render": false,
+        "stratified_sampler": false,
+        "scene_bvh": true,
+        "spp": 500,
+        "spp_step": 1,
+        "checkpoint_interval": "1000",
+        "timeout": "14.5834"
+    }
+}

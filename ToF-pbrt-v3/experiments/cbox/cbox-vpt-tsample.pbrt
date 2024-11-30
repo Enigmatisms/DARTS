@@ -1,0 +1,214 @@
+# No image filter by default
+
+LookAt 2.78 2.73 -8.00  2.78 2.73 0   0 1 0
+# Camera "perspective" "float fov" [15.0]
+Camera "perspective" "float fov" [39.3077]
+Accelerator "bvh"
+Sampler "random" "integer pixelsamples" [10000]
+Film "image"
+   "string filename" ["cbox.exr"]
+   "integer xresolution" [512]
+   "integer yresolution" [512]
+   "float tmin_time" [16.1]
+   "float t_interval" [0.1]
+   "integer t_samplecnt" [1]
+
+Integrator "volpath" "integer maxdepth" [120] "float rrthreshold" [0.0] "integer rseed_time" [1] "integer logTime" [1]
+ "integer guiding" [1] "bool da_guide" "false" "integer time_sample" [1] "integer use_truncate" [0] "integer extra_nee_nums" [0] "bool fuse_origin" ["false"]
+# Integrator "bdpt" "integer maxdepth" [80]
+
+MakeNamedMedium "mymedium" "string type" "guided_homo" "rgb sigma_s" [0.2 0.2 0.2] "rgb sigma_a" [0.005 0.005 0.005] "float g" [-0.0] "bool use_elliptical_phase" "false"
+MediumInterface "" "mymedium"
+
+WorldBegin
+LightSource "point" "rgb I" [1000. 1000. 1000.] "point from" [2.779 4.8 2.4]
+
+# medium box
+
+AttributeBegin
+   Material "none"
+   MediumInterface "mymedium" ""
+   Shape "plymesh"
+      "string filename" [ "scatter.ply" ]
+AttributeEnd
+
+#red wall
+
+AttributeBegin
+   Material "matte"
+   "rgb Kd" [0.8666667 0.14509805 0.14509805]
+   
+   Shape "trianglemesh"
+   "integer indices" [ 0 1 2  2 3 0 ]
+   "point P" [
+      5.528    00   0.0
+      5.496    00 5.592
+      5.560 5.488 5.592
+      5.560 5.488   0.0 ]
+AttributeEnd
+
+# green wall
+
+AttributeBegin
+   Material "matte"
+   "rgb Kd" [0.14509805 0.8666667 0.14509805]
+
+   Shape "trianglemesh"
+   "integer indices" [ 0 1 2  2 3 0 ]
+   "point P" [
+      0.0   0.0 5.592
+      0.0   0.0   0.0
+      0.0 5.488   0.0
+      0.0 5.488 5.592 ]
+AttributeEnd
+
+# everything else is white
+
+Material "matte"
+
+"rgb Kd" [0.7411765 0.7411765 0.7411765]
+
+# tall box
+
+AttributeBegin
+   Shape "trianglemesh"
+   "point3 P" [ 
+	   4.230000019 3.299999952 2.470000029
+	   2.650000095 3.299999952 2.960000038
+	   3.140000105 3.299999952 4.559998989
+	   4.71999979 3.299999952 4.059998989
+	   4.230000019 0 2.470000029
+	   4.230000019 3.299999952 2.470000029
+	   4.71999979 3.299999952 4.059998989
+	   4.71999979 0 4.059999943
+	   4.71999979 0 4.059999943
+	   4.71999979 3.299999952 4.059998989
+	   3.140000105 3.299999952 4.559998989
+	   3.140000105 0 4.559999943
+	   3.140000105 0 4.559999943
+	   3.140000105 3.299999952 4.559998989
+	   2.650000095 3.299999952 2.960000038
+	   2.650000095 0 2.960000038
+	   2.650000095 0 2.960000038
+	   2.650000095 3.299999952 2.960000038
+	   4.230000019 3.299999952 2.470000029
+	   4.230000019 0 2.470000029
+	   4.71999979 0 4.059999943
+	   3.140000105 0 4.559999943
+	   2.650000095 0 2.960000038
+	   4.230000019 0 2.470000029
+   ]
+   "integer indices" [ 
+      0 1 2
+      0 2 3
+      4 5 6
+      4 6 7
+      8 9 10
+      8 10 11
+      12 13 14
+      12 14 15
+      16 17 18
+      16 18 19
+      20 21 22
+      20 22 23
+   ]
+AttributeEnd
+
+#
+# floor
+#
+
+AttributeBegin
+   Shape "trianglemesh"
+   "integer indices" [ 0 1 2  2 3 0 ]
+   "point P" [
+      5.528 0.0   0.0
+      0.0 0.0   0.0
+      0.0 0.0 5.592
+    5.496 0.0 5.592 ]
+AttributeEnd
+
+
+#
+# ceiling
+#
+
+AttributeBegin
+   Shape "trianglemesh"
+   "integer indices" [ 0 1 2  2 3 0 ]
+   "point P" [
+    5.560 5.488 0.0
+    5.560 5.488 5.592
+      0.0 5.488 5.592
+      0.0 5.488   0.0 ]
+AttributeEnd
+
+
+#
+# back wall
+#
+
+AttributeBegin
+   Shape "trianglemesh"
+   "integer indices" [ 0 1 2  2 3 0 ]
+   "point P" [
+    5.496   0.0 5.592
+      0.0   0.0 5.592
+      0.0 5.488 5.592
+    5.560 5.488 5.592]
+AttributeEnd
+
+
+#
+# short block
+#
+
+AttributeBegin
+
+   Material "matte"
+   "rgb Kd" [0.7372549 0.7372549 0.7372549]
+
+   Shape "trianglemesh"
+   "point3 P" [
+      1.299999952 1.649999976 0.6499999762
+      0.8199999928 1.649999976 2.25
+      2.400000095 1.649999976 2.720000029
+      2.900000095 1.649999976 1.139999986
+      2.900000095 0 1.139999986
+      2.900000095 1.649999976 1.139999986
+      2.400000095 1.649999976 2.720000029
+      2.400000095 0 2.720000029
+      1.299999952 0 0.6499999762
+      1.299999952 1.649999976 0.6499999762
+      2.900000095 1.649999976 1.139999986
+      2.900000095 0 1.139999986
+      0.8199999928 0 2.25
+      0.8199999928 1.649999976 2.25
+      1.299999952 1.649999976 0.6499999762
+      1.299999952 0 0.6499999762
+      2.400000095 0 2.720000029
+      2.400000095 1.649999976 2.720000029
+      0.8199999928 1.649999976 2.25
+      0.8199999928 0 2.25
+      2.900000095 0 1.139999986
+      2.400000095 0 2.720000029
+      0.8199999928 0 2.25
+      1.299999952 0 0.6499999762
+   ]
+   "integer indices" [ 
+      0 1 2
+      0 2 3
+      4 5 6
+      4 6 7
+      8 9 10
+      8 10 11
+      12 13 14
+      12 14 15
+      16 17 18
+      16 18 19
+      20 21 22
+      20 22 23
+   ]
+AttributeEnd
+
+WorldEnd
