@@ -28,6 +28,10 @@ Compilation and using this code base can refer to the README in each folder. The
 You can refer to [Enigmatisms/AnalyticalGuiding]() repo to test the 2D and 1D numerical tests and interactive visualization (in DearPyGui and Taichi).
 
 ---
+### Scene availability
+Check [this repo](https://github.com/Enigmatisms/DARTS-scenes) for GLOSSY DRAGON and STAIRCASE scene. For more test scenes mentioned in the supplementary document, open an issue and leave your e-mail for me so that I can send them to you.
+
+---
 
 ### Rendering Results
 
