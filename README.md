@@ -25,7 +25,7 @@ Compilation and using this code base can refer to the README in each folder. The
 - Added `GuidedHomogeneousMedium` class, `IsotropicDAPhase` class and etc. which support our sampling methods.
 - Modified some of the BSDF implementation, so that Tungsten can have the same outputs as PBRT-v3 (Tungsten can have matched output as PBRT-v4 but not v3).
 
-You can refer to [Enigmatisms/AnalyticalGuiding]() repo to test the 2D and 1D numerical tests and interactive visualization (in DearPyGui and Taichi).
+You can refer to [Enigmatisms/AnalyticalGuiding](https://github.com/Enigmatisms/AnalyticalGuiding) repo to test the 2D and 1D numerical tests and interactive visualization (in DearPyGui and Taichi).
 
 ---
 ### Scene availability
