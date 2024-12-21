@@ -11,6 +11,7 @@
 #include "Curves.hpp"
 #include "Point.hpp"
 #include "DirectionalPoint.hpp"
+#include "Collimated.hpp"
 #include "Cube.hpp"
 #include "Quad.hpp"
 #include "Disk.hpp"
@@ -25,6 +26,7 @@ DEFINE_STRINGABLE_ENUM(PrimitiveFactory, "primitive", ({
     {"disk", std::make_shared<Disk>},
     {"curves", std::make_shared<Curves>},
     {"point", std::make_shared<Point>},
+    {"collimated", std::make_shared<Collimated>},
     {"directional_point", std::make_shared<DirectionalPoint>},
     {"skydome", std::make_shared<Skydome>},
     {"cylinder", std::make_shared<Cylinder>},

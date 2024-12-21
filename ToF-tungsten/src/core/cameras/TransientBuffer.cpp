@@ -40,7 +40,7 @@ void TransientBuffer<T>::initTransientBuffer(int nframes) {
     }
 }
 
-/// @brief  Temporal path reused transient recording (originally not supported, by authors of DARTS paper)
+/// @brief  Temporal path reused transient recording (originally not supported, by Qianyue He)
 template<typename T>
 void TransientBuffer<T>::addTransientSample(T* pixel_transient, Vec2u pixel) {
     if (!_transients || pixel_transient == nullptr) return;

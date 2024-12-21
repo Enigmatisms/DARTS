@@ -20,8 +20,8 @@ namespace Tungsten {
 PbrtPlasticBsdf::PbrtPlasticBsdf()
 : _ior(1.5f),
   _distribution("pbrt-ggx"),
-  _Ks(0.25f),
-  _roughness(std::make_shared<ConstantTexture>(0.1f))
+  _roughness(std::make_shared<ConstantTexture>(0.1f)),
+  _Ks(0.25f)
 {
     _lobes = BsdfLobes(BsdfLobes::GlossyReflectionLobe | BsdfLobes::DiffuseReflectionLobe);
 }
@@ -58,9 +58,6 @@ bool PbrtPlasticBsdf::sample(SurfaceScatterEvent &event) const
 
     if (!sampleR && !sampleT)
         return false;
-
-    const Vec3f &wi = event.wi;
-    float eta = 1.0f/_ior;
 
     if (sampleR && (event.sampler->nextBoolean(0.5) || !sampleT)) {     // sample specular component (if sampleT, both specular and diffuse will be sampled)
         float roughness = (*_roughness)[*event.info].x();
@@ -135,14 +132,11 @@ bool PbrtPlasticBsdf::invert(WritablePathSampleGenerator &sampler, const Surface
     if (!sampleR && !sampleT)
         return false;
 
-    float glossyPdf = 0.0f;
     if (sampleR)
-        glossyPdf = RoughDielectricBsdf::pdfBase(event, true, false, (*_roughness)[*event.info].x(), _ior, _distribution, true);
+        RoughDielectricBsdf::pdfBase(event, true, false, (*_roughness)[*event.info].x(), _ior, _distribution, true);
 
-    float diffusePdf = 0.0f;
     if (sampleT)
-        diffusePdf = SampleWarp::cosineHemispherePdf(event.wo);
-
+        SampleWarp::cosineHemispherePdf(event.wo);
 
     if (sampler.untrackedBoolean(0.5)) {
         sampler.putBoolean(0.5, true);

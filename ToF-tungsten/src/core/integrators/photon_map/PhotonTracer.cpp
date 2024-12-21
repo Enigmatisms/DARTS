@@ -9,6 +9,25 @@
 
 namespace Tungsten {
 
+static constexpr bool QUERY_PROFILE   = false;
+static constexpr bool KD_TREE_PROFILE = false;
+
+#define STATIC_INITIALIZE(name, type, value) \
+    template<> \
+    std::atomic<type> PhotonTracer<false>::name = 0; \
+    template<> \
+    std::atomic<type> PhotonTracer<true>::name = 0;
+
+STATIC_INITIALIZE(valid_cnt, long, 0)
+STATIC_INITIALIZE(all_cnt, long, 0)
+STATIC_INITIALIZE(profile_output_flag, bool, false)
+STATIC_INITIALIZE(kd_tree_time, uint64_t, 0)
+STATIC_INITIALIZE(kd_tree_cnt, uint64_t, 0)
+STATIC_INITIALIZE(query_func_time, uint64_t, 0)
+STATIC_INITIALIZE(query_func_cnt, uint64_t, 0)
+
+#undef STATIC_INITIALIZE
+
 constexpr bool camera_warped = true;
 constexpr bool enable_darts  = true;           // skip non-darts part
 
@@ -415,7 +434,7 @@ static inline bool intersectHyperVolume(const Ray &ray, float minT, float maxT,
 
     float tMin = minT;
     float tMax = maxT;
-    for (int i = 0; i < NUM_SLABS; ++i)
+    for (size_t i = 0; i < NUM_SLABS; ++i)
     {
         float slabTMin, slabTMax;
         if (getSlabBoundary(ray, &originTable[i][0], NUM_PLANES_PER_SLAB, eTable[i][0], eTable[i][1], slabTMin, slabTMax))
@@ -764,7 +783,7 @@ static inline Vec3f scoreBasedWeight(Vec3f selfEstimate, Vec3f otherEstimate)
     return selfWeight;
 }
 
-static const float timeInVolume(const Medium *medium, const Vec3f &p, const Vec3f &a, const Vec3f &b, const Vec3f &c, const Vec3f& uvw, Vec3f* last_p = nullptr)
+static float timeInVolume(const Medium *medium, const Vec3f &p, const Vec3f &a, const Vec3f &b, const Vec3f &c, const Vec3f& uvw, Vec3f* last_p = nullptr)
 {
     Vec3f p0 = p;
     Vec3f p1 = p0 + a * uvw.x();
@@ -778,8 +797,8 @@ static const float timeInVolume(const Medium *medium, const Vec3f &p, const Vec3
     return t;
 }
 
-static bool evalDeltaSlicedVolume(const Transient::TransientPhotonVolume &p, PathSampleGenerator &sampler, const Ray &ray, const Medium *medium,
-                                const TraceableScene *scene, const PhotonMapSettings &settings, float tMin, float tMax, float camTimeTraveled,
+static bool evalDeltaSlicedVolume(const Transient::TransientPhotonVolume &p, PathSampleGenerator & /* sampler */, const Ray &ray, const Medium *medium,
+                                const TraceableScene *scene, const PhotonMapSettings & /* settings */, float tMin, float tMax, float camTimeTraveled,
                                 SurfaceEval &eval)
 {
     ASSERT(camTimeTraveled == 0.f, "supports camera unwarped only");
@@ -944,8 +963,6 @@ static bool evalTransientVolume(const Transient::TransientPhotonVolume &p, PathS
             pInfo.vertices[2] = p1;
             pInfo.vertices[3] = p0;
 
-            float dLen = d.length();
-
             Vec3f sigmaT = medium->sigmaT(p3);
             Vec3f controlVariate;
             if (settings.deltaTimeGate)
@@ -1016,7 +1033,7 @@ static inline void sampleUniform(PathSampleGenerator &sampler, float t1, float t
 }
 
 static bool evalTransientHyperVolume(const Transient::TransientPhotonHyperVolume &p, PathSampleGenerator &sampler, const Ray &ray, const Medium *medium,
-                                     const TraceableScene *scene, const PhotonMapSettings &settings, float tMin, float tMax, float camTimeTraveled, float &isectT, Vec3f &totalEstimate)
+                                     const TraceableScene *scene, const PhotonMapSettings &settings, float tMin, float tMax, float /* camTimeTraveled */, float &isectT, Vec3f &totalEstimate)
 {
     float hyperVolumeTMin, hyperVolumeTMax;
     if (!intersectHyperVolume(ray, tMin, tMax, p.p, p.a, p.b, p.c, p.d, hyperVolumeTMin, hyperVolumeTMax))
@@ -1119,7 +1136,7 @@ static bool evalTransientHyperVolume(const Transient::TransientPhotonHyperVolume
 }
 
 static bool evalDeltaSlicedBall(const Transient::TransientPhotonBall &p, PathSampleGenerator &sampler, const Ray &ray, const Medium *medium,
-                              const TraceableScene *scene, const PhotonMapSettings &settings, float tMin, float tMax, float camTimeTraveled,
+                              const TraceableScene *scene, const PhotonMapSettings & /*settings*/, float tMin, float tMax, float /* camTimeTraveled */,
                               SurfaceEval &eval)
 {
     ASSERT(p.isDeltaSliced, "not delta sliced");
@@ -1410,10 +1427,19 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                 Vec3f estimate(0.0f);
 
                 // A lambda function, captures timeTraveled and uses volumePhoton's travelling time
-                auto pointContribution = [&, &transients](const VolumePhoton &p, float t, float distSq) {
+                auto pointContribution = [&](const VolumePhoton &p, float t, float distSq) {
+                    std::chrono::steady_clock::time_point start_time;
+                    if constexpr (QUERY_PROFILE)
+                        start_time = std::chrono::steady_clock::now();
                     int fullPathBounce = bounce + p.bounce - 1;
-                    if (fullPathBounce < _settings.minBounces || fullPathBounce >= _settings.maxBounces)
+                    if (fullPathBounce < _settings.minBounces || fullPathBounce >= _settings.maxBounces) {
+                        if constexpr (QUERY_PROFILE) {
+                            auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start_time).count();
+                            query_func_time += duration;
+                            query_func_cnt  += 1;
+                        }
                         return;
+                    }
 
                     Ray mediumQuery(ray);
                     mediumQuery.setFarT(t);
@@ -1424,7 +1450,6 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
 
                     if constexpr (isTransient)
                     {
-                        // NOTE: does not count camera time for now -- what do you mean by: does not count camera time for now?
                         float pathTime = timeTraveled + p.timeTraveled;
                         if constexpr (camera_warped)
                             pathTime += medium->timeTraveled(ray.pos(), p.pos);
@@ -1441,10 +1466,15 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                     {
                         estimate += pointEstimate;
                     }
+                    if constexpr (QUERY_PROFILE) {
+                        auto duration = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start_time).count();
+                        query_func_time += duration;
+                        query_func_cnt  += 1;
+                    }
                 };
 
                 // point contribution will account for photon time, beam contribution won't?
-                auto beamContribution = [&, &transients](uint32 photonIndex, const Vec3pf *bounds, float tMin, float tMax) {
+                auto beamContribution = [&](uint32 photonIndex, const Vec3pf *bounds, float tMin, float tMax) {
                     const PhotonBeam &beam = beams[photonIndex];
                     int fullPathBounce = bounce + beam.bounce;
                     if (fullPathBounce < _settings.minBounces || fullPathBounce >= _settings.maxBounces)
@@ -1483,7 +1513,7 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                     }
 
                 };
-                auto volumeContribution = [&](uint32 photon, const Vec3pf *bounds, float tMin, float tMax)
+                auto volumeContribution = [&](uint32 photon, const Vec3pf* /* bound */, float tMin, float tMax)
                 {
                     if (!volumes[photon].valid)
                         return;
@@ -1571,7 +1601,7 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                         FAIL("volume ball does not support non-transient");
                     }
                 };
-                auto hyperVolumeContribution = [&](uint32 rawIdx, const Vec3pf *bounds, float tMin, float tMax) {
+                auto hyperVolumeContribution = [&](uint32 rawIdx, const Vec3pf * /* bound */, float tMin, float tMax) {
                     TypedPhotonIdx typedIdx(rawIdx);
                     uint32_t photon = typedIdx.idx;
 
@@ -1594,7 +1624,7 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                         FAIL("evaluating non-transient hypervolumes is not supported!");
                     }
                 };
-                auto ballContribution = [&](uint32 photon, const Vec3pf *bounds, float tMin, float tMax) {
+                auto ballContribution = [&](uint32 photon, const Vec3pf * /*bound*/, float tMin, float tMax) {
                     if (!balls[photon].valid)
                         return;
                     int photonBounce = balls[photon].bounce;
@@ -1618,7 +1648,15 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                 };
 
                 if (photonType == VOLUME_POINTS) {
+                    std::chrono::steady_clock::time_point stime;
+                    if constexpr (KD_TREE_PROFILE)
+                        stime = std::chrono::steady_clock::now();
                     mediumTree->beamQuery(ray.pos(), ray.dir(), ray.farT(), pointContribution);
+                    if constexpr (KD_TREE_PROFILE) {
+                        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - stime).count();
+                        kd_tree_time += duration;
+                        kd_tree_cnt  += 1;
+                    }
                 } else if (photonType == VOLUME_BEAMS) {
                     if (mediumBvh) {
                         mediumBvh->trace(ray, [&](Ray &ray, uint32 photonIndex, float /*tMin*/, const Vec3pf &bounds) {
@@ -1788,18 +1826,29 @@ Vec3f PhotonTracer<isTransient>::traceSensorPath(Vec2u pixel, const KdTree<Photo
                 transients[frame_idx] += estimate * throughput * INV_PI / radiusSq;
         }
     }
-    // printf("Equal? %d, %d, %f, %f\n", count, int(_settings.gatherCount), _distanceQuery[0], gatherRadius*gatherRadius);
     result += throughput*surfaceEstimate*(INV_PI/radiusSq);
     return result;
 }
 
 template<bool isTransient>
-bool PhotonTracer<isTransient>::frustumCulling(PathSampleGenerator &sampler, const Vec3f& photon_p, const Vec3f& cam_p) const {
-    PositionSample dummpy_pos;
-    Vec2f dummy_pixel;
-    Vec3f to_photon = photon_p - cam_p, dummy;
-    to_photon /= to_photon.length();
-    return _scene->cam().evalDirection(sampler, dummpy_pos, DirectionSample(to_photon), dummy, dummy_pixel);
+PhotonTracer<isTransient>::~PhotonTracer() {
+    bool expected = false;
+    if (profile_output_flag.compare_exchange_strong(expected, true)) {
+        float ratio = all_cnt == 0 ? -1 : float(valid_cnt) / float(all_cnt) * 100.f;
+        printf("Valid count: %d, all count: %d, ratio: %f %%\n", (int)valid_cnt, (int)all_cnt, ratio);
+        if constexpr (KD_TREE_PROFILE)
+            printf("KD-tree call cnt: %lu, KD-tree avg time: %lf ms\n", (uint64_t)kd_tree_cnt, double(kd_tree_time) / double(kd_tree_cnt) / 1000.0);
+        if constexpr (QUERY_PROFILE)
+            printf("query func call cnt: %lu, query func avg time: %lf us\n", (uint64_t)query_func_cnt, double(query_func_time) / double(query_func_cnt) / 1000.0);
+    }
+}
+
+template<bool isTransient>
+bool PhotonTracer<isTransient>::frustumCulling(const Vec3f& photon_p) const {
+    bool result = _scene->cam().canSplatOnScreen(photon_p);
+    all_cnt += 1;
+    valid_cnt += int(result);
+    return result;
 }
 
 template<bool isTransient>
@@ -1812,17 +1861,17 @@ inline bool PhotonTracer<isTransient>::isInTimeRange(
         // actually, since we are unable to find photons that are on the surface and in the meantime, satisfy the time constraints
         // we can only discard those that are outside of the time range
         if (_settings.enable_elliptical || _settings.enable_guiding) {
-            float min_travel_time = time_travelled, distance = (src_p - dst_p).length();
-            min_travel_time += medium ? medium->timeTraveled(distance) : (distance / speedOfLight);
-            lt_max = min_travel_time < (frame_start + _settings.transientTimeWidth);
+            const float distance = (src_p - dst_p).length();
+            time_travelled += medium ? medium->timeTraveled(distance) : (distance / speedOfLight);
+            lt_max = time_travelled < (frame_start + _settings.transientTimeWidth);
             in_time_range &= lt_max;
             // strict_time_width will not account for **specular effect**, since the target vertex in this situation can not be known
             if (_settings.strict_time_width)
-                in_time_range &= (min_travel_time >= frame_start);
+                in_time_range &= time_travelled >= frame_start;
         }
     }
     return in_time_range;
-}
+}   
 
 template<bool isTransient>
 void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange, VolumePhotonRange &volumeRange,
@@ -1891,9 +1940,10 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
     bool didHit = _scene->intersect(ray, data, info);
  
     // NOTE: only needed for transient, but if put in "if constexpr (isTransient)" compiler will complain
-    // Ok, so add travelled time to Photon is not so difficult?
     float timeTraveled = 0.0f, remaining_time = 0.f;
     float speedOfLight = medium ? medium->speedOfLight(ray.pos()) : _settings.vaccumSpeedOfLight;
+    EllipseInfo ell_info(sampling_info, ray.pos(), min_remaining_t, timeTraveled, _settings.transientTimeWidth, sampler);
+    Vec3f ell_direction = ray.dir(), ell_throughput = throughput;
 
     while ((didHit || medium) && bounce < _settings.maxBounces - 1) {
         bool hitSurface = didHit;
@@ -1902,7 +1952,6 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
         Vec3f continuedThroughput = throughput;
 
         if constexpr (enable_darts && isTransient) {
-            EllipseInfo ell_info(sampling_info, ray.pos(), min_remaining_t, timeTraveled, _settings.transientTimeWidth, sampler);
             remaining_time = ell_info.target_t;
             if (_settings.enable_elliptical && medium) {            // elliptical sampling logic (might only work with photon points)
                 // this will account for 3 vertex path (originally we only have vertex >= 4 path)
@@ -1917,22 +1966,30 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
                         VolumePhoton &p = volumeRange.addPhoton();
                         p.pos = ray.pos();
                         p.dir = ray.dir();
-                        p.power = throughput;
+                        p.power = ell_throughput;
                         p.bounce = bounce;
                         p.timeTraveled = timeTraveled;
                     }
                 } else if (!volumeRange.full()) {
                     MediumSample mit;
                     mit.t = -1;
-                    medium->elliptical_sample(ray, sampler, mit, &ell_info);
+                    Ray ell_ray = ray;
+                    if (!_settings.reuse_path_dir && bounceSinceSurface > 1) {
+                        ell_ray.setDir(ell_direction);
+                        ell_ray.setFarT(Ray::infinity());
+                        IntersectionTemporary _temp_data;
+                        IntersectionInfo _temp_info;
+                        _scene->intersect(ell_ray, _temp_data, _temp_info);
+                    }
+                    medium->elliptical_sample(ell_ray, sampler, mit, &ell_info);
                     // if we do not use frustum_culling, or when we use + the photon is actually in the frustum:
-                    bool in_cam_frustum = (!_settings.frustum_culling) || frustumCulling(sampler, mit.p, sampling_info->vertex_p);
+                    bool in_cam_frustum = (!_settings.frustum_culling) || (mit.t > 0 && frustumCulling(mit.p));
                     // The volume photons sampled via ellipitcal sampling will fall in the time range (with high probability)
                     if (mit.t > 0 && in_cam_frustum) {
                         VolumePhoton &p = volumeRange.addPhoton();
                         p.pos = mit.p;
-                        p.dir = ray.dir();
-                        p.power = throughput * mit.weight / bin_pdf;                                    // extra elliptical weight
+                        p.dir = ell_ray.dir();
+                        p.power = ell_throughput * mit.weight / bin_pdf;                                    // extra elliptical weight
                         p.bounce = bounce + 1;                                                          // elliptical vertex actually adds one more bounce
                         p.timeTraveled = timeTraveled + medium->timeTraveled(mit.t);                    // account for elliptical time
                     }
@@ -1951,8 +2008,7 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
             // only if medium->sample returns surface interaction
             hitSurface = mediumSample.exited;
             if constexpr (isTransient) {
-                const float segmentTimeTraveled = medium->timeTraveled(mediumSample.t);
-                timeTraveled += segmentTimeTraveled;
+                timeTraveled += medium->timeTraveled(mediumSample.t);
                 speedOfLight = medium->speedOfLight(ray.pos());
             }
 
@@ -1995,33 +2051,50 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
 
             Ray continuedRay;
             PhaseSample phaseSample;
+
+            // update elliptical info for IDA phase function
+
             if (!hitSurface || traceHigherOrder) {
-                if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample))
+                ell_info = EllipseInfo(sampling_info, mediumSample.p, min_remaining_t, timeTraveled, _settings.transientTimeWidth, sampler);
+                if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample, &ell_info))
                     break;
+
+                if (!_settings.reuse_path_dir) {
+                    PhaseSample temp_smp;
+                    mediumSample.phase->sample(sampler, ray.dir(), temp_smp);
+                    ell_direction = temp_smp.w;
+                }
+
                 continuedRay = ray.scatter(mediumSample.p, phaseSample.w, 0.0f);
                 continuedRay.setPrimaryRay(false);
             }
 
             if (!hitSurface) {      // current vertex is not surface
                 ray = continuedRay;
-                throughput *= phaseSample.weight;
+                // Originally we have erroneous logic here. For no path reuse case
+                // elliptical sampling should be multiplied by throughput without phaseSample.weight
+                if (!_settings.reuse_path_dir) {            // no reuse
+                    ell_throughput = throughput;
+                    throughput *= phaseSample.weight;
+                } else {                                    // reuse
+                    ell_throughput = throughput * phaseSample.weight;
+                    throughput = ell_throughput;
+                }
             } else if (traceHigherOrder) {  // hit surface, but we will continue tracing (medium bounces?)
                 Medium::MediumState continuedState = state;
                 float ghostTimeTraveled = timeTraveled;
                 // Photon beam method will not trace `HigherOrder`, since num of ghost bounces = 0
                 // Here, only DA-based distance sampling will be used. Elliptical sampling will not be helpful
                 // FIXME: efficiency can be improved here, to skip this part for DARTS PP
-                for (int ghostBounceIdx = 0; ghostBounceIdx < numGhostBounces; ++ghostBounceIdx)
-                {
+                EllipseInfo tmp_ell_info = ell_info;
+                for (int ghostBounceIdx = 0; ghostBounceIdx < numGhostBounces; ++ghostBounceIdx) {
                     if (!medium->sampleDistance(sampler, continuedRay, continuedState, mediumSample))
                         break;
-                    if constexpr (isTransient)
-                    {
+                    if constexpr (isTransient) {
                         ghostTimeTraveled += medium->timeTraveled(mediumSample.continuedT);
                     }
 
-                    if (!pathRange.full())
-                    {
+                    if (!pathRange.full()) {
                         pathRange.nextPtr()[-1].sampledLength = mediumSample.continuedT;
                         PathPhoton &p = pathRange.addPhoton();
                         p.pos = mediumSample.p;
@@ -2029,13 +2102,15 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
                         p.inMedium = medium;
                         p.setPathInfo(bounce + 1 + ghostBounceIdx, ghostBounceIdx == numGhostBounces - 1, true);
                         p.scatter().setMediumScatter(medium, mediumSample.p, continuedRay.dir());
-                        if constexpr (isTransient)
-                        {
+                        if constexpr (isTransient) {
                             p.timeTraveled = ghostTimeTraveled;
                         }
                     }
 
-                    if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample))
+                    // using IDA sampling (possibly) during higher-dimensional photon primitives
+                    tmp_ell_info = EllipseInfo(sampling_info, mediumSample.p, min_remaining_t, 
+                                        ghostTimeTraveled, _settings.transientTimeWidth, sampler);
+                    if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample, &tmp_ell_info))
                         break;
                     continuedRay = ray.scatter(mediumSample.p, phaseSample.w, 0.0f);
                     continuedRay.setPrimaryRay(false);
@@ -2106,6 +2181,10 @@ void PhotonTracer<isTransient>::tracePhotonPath(SurfacePhotonRange &surfaceRange
                 succeed = handleSurface(event, data, info, medium,
                                         bounce, true, false, ray, throughput, emission, wasSpecular, state);
             }
+            ell_throughput = throughput;
+
+            // we should of course update the elliptical info struct in surface pass
+            ell_info = EllipseInfo(sampling_info, ray.pos(), min_remaining_t, timeTraveled, _settings.transientTimeWidth, sampler);
 
             if (!succeed)
                 break;

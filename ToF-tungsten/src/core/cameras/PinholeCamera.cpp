@@ -134,6 +134,23 @@ bool PinholeCamera::invertPosition(WritablePathSampleGenerator &/*sampler*/, con
     return true;
 }
 
+bool PinholeCamera::canSplatOnScreen(const Vec3f& position) const {
+    auto direction = position - _pos;
+    Vec3f localD = _invTransform.transformVector(direction);
+    // return localD.z() > 0.f;
+    if (localD.z() <= 0.0f)
+        return false;
+    localD *= _planeDist/localD.z();
+
+    Vec2f pixel;
+    pixel.x() = (localD.x() + 1.0f)/(2.0f*_pixelSize.x());
+    pixel.y() = (_ratio - localD.y())/(2.0f*_pixelSize.x());
+    if (pixel.x() <= 0.5f - _filter.width() || pixel.y() <= 0.5f - _filter.width() ||
+        pixel.x() >= _res.x() - 0.5f + _filter.width() || pixel.y() >= _res.y() - 0.5f + _filter.width())
+        return false;
+    return true;
+}
+
 bool PinholeCamera::evalDirection(PathSampleGenerator &/*sampler*/, const PositionSample &/*point*/,
         const DirectionSample &direction, Vec3f &weight, Vec2f &pixel) const
 {
@@ -145,9 +162,9 @@ bool PinholeCamera::evalDirection(PathSampleGenerator &/*sampler*/, const Positi
     pixel.x() = (localD.x() + 1.0f)/(2.0f*_pixelSize.x());
     pixel.y() = (_ratio - localD.y())/(2.0f*_pixelSize.x());
     if (pixel.x() <= 0.5f - _filter.width() || pixel.y() <= 0.5f - _filter.width() ||
-        pixel.x() >= _res.x() - 0.5f + _filter.width() || pixel.y() >= _res.y() - 0.5f + _filter.width())
+        pixel.x() >= _res.x() - 0.5f + _filter.width() || pixel.y() >= _res.y() - 0.5f + _filter.width()) {
         return false;
-
+    }
     weight = Vec3f(sqr(_planeDist)/(4.0f*_pixelSize.x()*_pixelSize.x()*cube(localD.z()/localD.length())));
     return true;
 }

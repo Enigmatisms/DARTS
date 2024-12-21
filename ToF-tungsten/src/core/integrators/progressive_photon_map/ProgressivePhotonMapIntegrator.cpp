@@ -11,7 +11,9 @@
 #include "thread/ThreadPool.hpp"
 
 #include "bvh/BinaryBvh.hpp"
+#include <fstream>
 
+static constexpr bool EXPORT_PHOTON_FILES = false;
 namespace Tungsten {
 
 template<bool isTransient>
@@ -31,6 +33,32 @@ template<bool isTransient>
 rapidjson::Value ProgressivePhotonMapIntegrator<isTransient>::toJson(Allocator &allocator) const
 {
     return _progressiveSettings.toJson(this->_settings, allocator);
+}
+
+template<bool isTransient>
+void ProgressivePhotonMapIntegrator<isTransient>::exportPhoton3DPointCloud() const {
+    std::string surface_pcd_path = "/home/hqy/surface.xyz";
+    std::string volume_pcd_path  = "/home/hqy/volumetric.xyz";
+    std::ofstream surf_ofile(surface_pcd_path, std::ios::out | std::ios::app), volm_ofile(volume_pcd_path, std::ios::out | std::ios::app);
+    if (!surf_ofile.is_open() || !volm_ofile.is_open()) {
+        std::cerr << "Error: Unable to open file '" << surface_pcd_path << "' and '" << volume_pcd_path << "'\n";
+        return;
+    } else {
+        for (const auto &data : _taskData) {
+            uint32_t size = data.surfaceRange.size();
+            for (uint32_t i = 0; i < size; i++) {
+                const auto& photon = data.surfaceRange[i];
+                surf_ofile << photon.pos.x() << " " << photon.pos.y() << " " << photon.pos.z() << "\n";
+            }
+            size = data.volumeRange.size();
+            for (uint32_t i = 0; i < size; i++) {
+                const auto& photon = data.volumeRange[i];
+                volm_ofile << photon.pos.x() << " " << photon.pos.y() << " " << photon.pos.z() << "\n";
+            }
+        }
+    }
+    surf_ofile.close();
+    volm_ofile.close();
 }
 
 template<bool isTransient>
@@ -59,6 +87,9 @@ void ProgressivePhotonMapIntegrator<isTransient>::renderSegment(std::function<vo
         this->_tracers.size(),
         [](){}
     ));
+
+    if constexpr (EXPORT_PHOTON_FILES)
+        exportPhoton3DPointCloud();
 
     float gamma = 1.0f, volume_gamma = 1.0f;
     for (uint32 i = 1; i <= this->_iteration; ++i)

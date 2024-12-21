@@ -40,6 +40,11 @@ public:
 
     virtual bool isDirac() const override;
 
+    /**
+     * position of the vertex to be splatted
+    */
+    virtual bool canSplatOnScreen(const Vec3f& position) const override final;
+
     virtual float approximateFov() const override
     {
         return _fovRad;

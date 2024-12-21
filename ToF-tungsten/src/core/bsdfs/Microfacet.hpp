@@ -25,7 +25,7 @@ public:
     typedef StringableEnum<DistributionEnum> Distribution;
     friend Distribution;
 
-    static float roughnessToAlpha(DistributionEnum dist, float roughness, bool remap = false)
+    static float roughnessToAlpha(DistributionEnum dist, float roughness)
     {
         CONSTEXPR float MinAlpha = 1e-3f;
         roughness = max(roughness, MinAlpha);

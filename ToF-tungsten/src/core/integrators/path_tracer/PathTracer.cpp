@@ -60,6 +60,7 @@ Vec3f PathTracer::traceSample(
     }
     bool didHit = _scene->intersect(ray, data, info);
     bool wasSpecular = true;
+    EllipseInfo ell_info(sampling_info, ray.pos(), min_remaining_t, tof_info->elapsed_t, _settings.transientTimeWidth, sampler);
     while ((didHit || medium) && bounce < _settings.maxBounces) {
         bool hitSurface = true;
         bounceSinceSurface++;
@@ -67,7 +68,6 @@ Vec3f PathTracer::traceSample(
             mediumSample.continuedWeight = throughput;
 
             if constexpr (enable_darts && pt_use_tof) {
-                EllipseInfo ell_info(sampling_info, ray.pos(), min_remaining_t, tof_info->elapsed_t, _settings.transientTimeWidth, sampler);
                 remaining_time = ell_info.target_t;
                 if (_settings.enable_elliptical && medium && _settings.enableVolumeLightSampling) {            // elliptical sampling logic (might only work with photon points)
                     // this will account for 3 vertex path (originally we only have vertex >= 4 path)
@@ -126,6 +126,9 @@ Vec3f PathTracer::traceSample(
                 return emission;
 
             surfaceEvent = makeLocalScatterEvent(data, info, ray, &sampler);
+
+            ell_info = EllipseInfo(sampling_info, info.p, min_remaining_t, tof_info->elapsed_t, _settings.transientTimeWidth, sampler);
+
             Vec3f transmittance(-1.0f);
             bool terminate = !handleSurface(surfaceEvent, data, info, medium, bounce, false,
                     _settings.enableLightSampling && (mediumBounces > 0 || _settings.includeSurfaces), 
@@ -161,21 +164,37 @@ Vec3f PathTracer::traceSample(
             mediumBounces++;
             bool skip_volume_eval = pt_use_tof && !tof_info->enable_origin_sample;
             // either when when shut off ToF rendering in compile-time, or we decide to use original sample will we use this handleVolume
+
+            // we should of course update the elliptical info struct in surface pass
+            ell_info = EllipseInfo(sampling_info, mediumSample.p, min_remaining_t, tof_info->elapsed_t, _settings.transientTimeWidth, sampler);
+
             if (!handleVolume(sampler, mediumSample, medium, bounce, false,
                 _settings.enableVolumeLightSampling && (mediumBounces > 1 || _settings.lowOrderScattering), 
-                ray, throughput, emission, wasSpecular, tof_info.get(), skip_volume_eval))
+                ray, throughput, emission, wasSpecular, tof_info.get(), &ell_info, skip_volume_eval))
                 return emission;
         }
 
         if (throughput.max() == 0.0f)
             break;
+        if (_settings.enable_rr) {
+            float roulettePdf = std::abs(throughput).max();
+            if (bounce > 2 && roulettePdf < 0.1f) {
+                if (sampler.nextBoolean(roulettePdf))
+                    throughput /= roulettePdf;
+                else
+                    return emission;
+            }
+        }
 
-        float roulettePdf = std::abs(throughput).max();
-        if (bounce > 2 && roulettePdf < 0.1f) {
-            if (sampler.nextBoolean(roulettePdf))
-                throughput /= roulettePdf;
-            else
-                return emission;
+        if constexpr (!pt_use_tof) {
+            // Russian Roulette is disabled for Path Tracing
+            float roulettePdf = std::abs(throughput).max();
+            if (bounce > 2 && roulettePdf < 0.1f) {
+                if (sampler.nextBoolean(roulettePdf))
+                    throughput /= roulettePdf;
+                else
+                    return emission;
+            }
         }
 
         if (std::isnan(ray.dir().sum() + ray.pos().sum()))

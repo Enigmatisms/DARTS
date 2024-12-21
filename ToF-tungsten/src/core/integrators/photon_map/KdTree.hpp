@@ -39,7 +39,7 @@ class KdTree
             bounds.grow(_nodes[i].pos);
         uint32 splitDim = bounds.diagonal().maxDim();
 
-        std::sort(_nodes + start, _nodes + end, [&](const PhotonType &a, const PhotonType &b) {
+        std::sort(_nodes + start, _nodes + end, [splitDim](const PhotonType &a, const PhotonType &b) {
             return a.pos[splitDim] < b.pos[splitDim];
         });
 
@@ -310,7 +310,6 @@ public:
                 // distance from the photon to the ray
                 Vec3f p = current->pos - pos;
                 float proj = p.dot(dir);            // project distance on the ray direction
-                // This is approximated?
                 if (proj >= 0.0f && proj <= farT) {
                     float distSq = p.lengthSq() - proj*proj;
                     if (distSq <= current->radiusSq)

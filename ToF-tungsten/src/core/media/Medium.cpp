@@ -60,25 +60,25 @@ bool Medium::isDirac() const
     return _transmittance->isDirac();
 }
 
-float Medium::timeTraveled(float distance) const
+float Medium::timeTraveled(float /* distance */) const
 {
     FAIL("Medium::timeTraveled not implemented!");
     return 0.0f;
 }
 
-float Medium::timeTraveled(const Vec3f &pStart, const Vec3f &pEnd) const
+float Medium::timeTraveled(const Vec3f & /* pStart */, const Vec3f & /* pEnd */) const
 {
     FAIL("Medium::timeTraveled not implemented!");
     return 0.0f;
 }
 
-Vec3f Medium::travel(const Vec3f &o, const Vec3f &d, float time) const
+Vec3f Medium::travel(const Vec3f & /* o */, const Vec3f & /* d */, float /* time */) const
 {
     FAIL("Medium::travel not implemented!");
     return Vec3f();
 }
 
-float Medium::speedOfLight(const Vec3f &p) const
+float Medium::speedOfLight(const Vec3f & /* p */) const
 {
     FAIL("Medium::speedOfLight not implemented!");
     return 0.0f;
@@ -87,7 +87,7 @@ float Medium::speedOfLight(const Vec3f &p) const
 EllipseInfo::EllipseInfo (
     GuideInfoConstPtr sampling_info, const Vec3f& p, float min_time, 
     float p_time, float interval, PathSampleGenerator &sampler, bool full_init):
-    target_t(-1)
+    target_t(-1), T_div_D(0)
 {	
     // TODO: note that in Tungsten, the elliptical sampling does not consider the speed of light
     // so, do not set speed of light other than 1 (for now)

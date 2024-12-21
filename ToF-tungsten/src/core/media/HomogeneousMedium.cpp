@@ -152,7 +152,7 @@ Vec3f HomogeneousMedium::travel(const Vec3f &o, const Vec3f &d, float time) cons
     return o + d * time * _speedOfLight;
 }
 
-float HomogeneousMedium::speedOfLight(const Vec3f &p) const
+float HomogeneousMedium::speedOfLight(const Vec3f &) const
 {
     return _speedOfLight;
 }

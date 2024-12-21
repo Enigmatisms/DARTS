@@ -39,6 +39,10 @@ class ProgressivePhotonMapIntegrator : public PhotonMapIntegrator<isTransient>
 
     void renderSegment(std::function<void()> completionCallback);
 
+    void exportPhoton3DPointCloud() const;
+
+    using PhotonMapIntegrator<isTransient>::_taskData;
+
 public:
     ProgressivePhotonMapIntegrator();
 

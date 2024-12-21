@@ -266,6 +266,9 @@ void PathTraceIntegrator::startRender(std::function<void()> completionCallback)
         return;
     }
 
+    if (_settings.frame_num > 1)
+        _scene->cam().transientBuffer()->initTransientBuffer(_settings.frame_num);
+
     using namespace std::placeholders;
     _group = ThreadUtils::pool->enqueue(
         std::bind(&PathTraceIntegrator::renderTile, this, _3, _1),

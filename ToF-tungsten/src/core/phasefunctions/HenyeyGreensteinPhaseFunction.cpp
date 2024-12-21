@@ -5,7 +5,6 @@
 
 #include "math/TangentFrame.hpp"
 #include "math/MathUtil.hpp"
-#include "math/Angle.hpp"
 
 #include "io/JsonObject.hpp"
 
@@ -14,12 +13,6 @@ namespace Tungsten {
 HenyeyGreensteinPhaseFunction::HenyeyGreensteinPhaseFunction()
 : _g(0.0f)
 {
-}
-
-inline float HenyeyGreensteinPhaseFunction::henyeyGreenstein(float cosTheta) const
-{
-    float term = 1.0f + _g*_g - 2.0f*_g*cosTheta;
-    return INV_FOUR_PI*(1.0f - _g*_g)/(term*std::sqrt(term));
 }
 
 void HenyeyGreensteinPhaseFunction::fromJson(JsonPtr value, const Scene &scene)
@@ -41,7 +34,7 @@ Vec3f HenyeyGreensteinPhaseFunction::eval(const Vec3f &wi, const Vec3f &wo) cons
     return Vec3f(henyeyGreenstein(wi.dot(wo)));
 }
 
-bool HenyeyGreensteinPhaseFunction::sample(PathSampleGenerator &sampler, const Vec3f &wi, PhaseSample &sample) const
+bool HenyeyGreensteinPhaseFunction::sample(PathSampleGenerator &sampler, const Vec3f &wi, PhaseSample &sample, EllipseConstPtr) const
 {
     Vec2f xi = sampler.next2D();
     if (_g == 0.0f) {
@@ -79,7 +72,7 @@ bool HenyeyGreensteinPhaseFunction::invert(WritablePathSampleGenerator &sampler,
     return true;
 }
 
-float HenyeyGreensteinPhaseFunction::pdf(const Vec3f &wi, const Vec3f &wo) const
+float HenyeyGreensteinPhaseFunction::pdf(const Vec3f &wi, const Vec3f &wo, EllipseConstPtr /* ptr = nullptr */) const
 {
     return henyeyGreenstein(wi.dot(wo));
 }

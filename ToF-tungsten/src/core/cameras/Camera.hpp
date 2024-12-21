@@ -90,6 +90,11 @@ public:
             const DirectionSample &direction, Vec3f &weight, Vec2f &pixel) const;
     virtual float directionPdf(const PositionSample &point, const DirectionSample &direction) const;
 
+    /**
+     * position of the vertex to be splatted
+    */
+    virtual bool canSplatOnScreen(const Vec3f& position) const;
+
     virtual bool isDirac() const = 0;
 
     virtual float approximateFov() const = 0;

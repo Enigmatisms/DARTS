@@ -43,7 +43,7 @@ struct TransientInfo {
         float time_beg, float time_end, float inv_interval, float vacuum_sol, 
         float bin_pdf = 1.0f, Vec3f* const transients = nullptr
     ):  time_beg(time_beg), time_end(time_end), inv_interval(inv_interval), vacuum_sol(vacuum_sol), 
-        elapsed_t(0.0f), bin_pdf(bin_pdf), transients(transients) {}
+        bin_pdf(bin_pdf), elapsed_t(0.0f), transients(transients) {}
     bool valid() const {
         return (time_beg >= 0) && (time_end > 0);
     }
@@ -204,7 +204,8 @@ public:
 
     bool handleVolume(PathSampleGenerator &sampler, MediumSample &mediumSample,
                const Medium *&medium, int bounce, bool adjoint, bool enableLightSampling,
-               Ray &ray, Vec3f &throughput, Vec3f &emission, bool &wasSpecular, TransInfotPtr tof_info = nullptr, bool skip_eval = false);
+               Ray &ray, Vec3f &throughput, Vec3f &emission, bool &wasSpecular, 
+               TransInfotPtr tof_info = nullptr, EllipseConstPtr ell_info = nullptr, bool skip_eval = false);
 
     bool handleSurface(SurfaceScatterEvent &event, IntersectionTemporary &data,
                IntersectionInfo &info, const Medium *&medium,

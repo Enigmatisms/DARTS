@@ -31,6 +31,15 @@ public:
     {
     }
 
+    inline size_t size() const noexcept {
+        return _next - _start;
+    }
+
+    const PhotonType& operator[](uint32 index) const
+    {
+        return _dst[_start + index];
+    }
+
     PhotonType &addPhoton()
     {
         return _dst[_next++];

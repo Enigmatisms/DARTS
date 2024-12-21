@@ -9,6 +9,13 @@
 #include "thread/ThreadUtils.hpp"
 #include "thread/ThreadPool.hpp"
 
+#include <atomic>
+#include <chrono>
+static std::atomic<long> photon_pass_time = 0;
+static std::atomic<long> sensor_pass_time = 0;
+static std::atomic<int> photon_pass_call_cnt = 0;
+static std::atomic<int> sensor_pass_call_cnt = 0;
+
 namespace Tungsten {
 
 template<bool isTransient>
@@ -72,6 +79,7 @@ void PhotonMapIntegrator<isTransient>::tracePhotons(uint32 taskId, uint32 numSub
             bin_pdf = _settings.transientTimeWidth / _sampling_info->time_range;        // normally, 1
             remaining_time = _sampling_info->sample_time_point(sampler, bin_pdf, _settings.transientTimeBeg, _settings.transientTimeWidth);
         }
+        auto start_time = std::chrono::steady_clock::now();
         _tracers[threadId]->tracePhotonPath(
             data.surfaceRange,
             data.volumeRange,
@@ -81,6 +89,10 @@ void PhotonMapIntegrator<isTransient>::tracePhotons(uint32 taskId, uint32 numSub
             bin_pdf,
             remaining_time
         );
+        auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count();
+        photon_pass_time += duration;
+        photon_pass_call_cnt += 1;
+
         if (!data.surfaceRange.full())
             totalSurfaceCast++;
         if (!data.volumeRange.full())
@@ -91,7 +103,7 @@ void PhotonMapIntegrator<isTransient>::tracePhotons(uint32 taskId, uint32 numSub
             break;
 
         if (_group->isAborting())
-                break;
+            break;
     }
 
     _totalTracedSurfacePaths += totalSurfaceCast;
@@ -121,6 +133,7 @@ void PhotonMapIntegrator<isTransient>::tracePixels(uint32 tileId, uint32 threadI
                     for (int i = 0; i < _settings.frame_num; i++)
                         transients[i] = Vec3f(0.0f);
                 }
+                auto start_time = std::chrono::steady_clock::now();
                 Vec3f c = _tracers[threadId]->traceSensorPath(pixel,
                     *_surfaceTree,
                     _volumeTree.get(),
@@ -141,6 +154,9 @@ void PhotonMapIntegrator<isTransient>::tracePixels(uint32 tileId, uint32 threadI
                     _useFrustumGrid,
                     transients.get()
                 );
+                auto duration = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start_time).count();
+                sensor_pass_time     += duration;
+                sensor_pass_call_cnt += 1;
                 _scene->cam().colorBuffer()->addSample(pixel, c);
 
                 if (transients)
@@ -835,8 +851,7 @@ void PhotonMapIntegrator<isTransient>::PhotonMapIntegrator::buildVolumeGrid(uint
     for (uint32 i = 0; i < tail; ++i) {
         // TODO: support lowOrderScattering
         const PathPhoton &p3 = _pathPhotons[i - 0];
-        if (p3.bounce() > 2)
-        {
+        if (p3.bounce() > 2) {
             const PathPhoton &p0 = _pathPhotons[i - 3];
             const PathPhoton &p1 = _pathPhotons[i - 2];
             const PathPhoton &p2 = _pathPhotons[i - 1];
@@ -1104,6 +1119,9 @@ void PhotonMapIntegrator<isTransient>::teardownAfterRender()
     _volumeTree.reset();
     _volumeGrid.reset();
     _volumeBvh.reset();
+    printf("Tearing down...\n");
+    printf("PhotonMapIntegrator photon path trace call cnt: %d, avg running time: %f ms\n", (int)photon_pass_call_cnt, float(photon_pass_time) / float(photon_pass_call_cnt) / 1000.f);
+    printf("PhotonMapIntegrator sensor path trace call cnt: %d, avg running time: %f ms\n", (int)sensor_pass_call_cnt, float(sensor_pass_time) / float(sensor_pass_call_cnt) / 1000.f);
 }
 
 template <bool isTransient>

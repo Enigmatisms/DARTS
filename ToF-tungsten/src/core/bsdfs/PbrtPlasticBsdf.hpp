@@ -2,6 +2,7 @@
  * In pbrt, plastic BSDF is actually implemented via the 'mixing'
  * of Microfacet specular model and the Lambertian
  * For diffuse part, we don't care about the Fresnel effect, which will be considered in RoughPlastic
+ * Author: Qianyue He
  * Date:  2023.11.15
 */
 

@@ -23,7 +23,7 @@ public:
 
         Primitive() = default;
         Primitive(uint32 idx_, Vec3f p0_, Vec3f p1_, Vec3f p2_, Vec3f p3_, float r_, VolumePhotonEnum type_)
-        : typedIdx(), p0(p0_), p1(p1_), p2(p2_), p3(p3_), r(r_)
+        : p0(p0_), p1(p1_), p2(p2_), p3(p3_), r(r_), typedIdx()
         {
             typedIdx.type = type_;
             typedIdx.idx = idx_;

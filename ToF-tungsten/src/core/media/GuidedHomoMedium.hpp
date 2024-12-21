@@ -36,17 +36,17 @@ protected:
 	static constexpr float inv_cascasde = 1.f / CASCADE_NUM;
 public:
     GuidedHomoMedium();
-    virtual void prepareForRender() override;
+    void prepareForRender() override;
 
-    virtual bool sampleDistance(
+    bool sampleDistance(
         PathSampleGenerator &sampler, const Ray &ray, MediumState &state, 
 		MediumSample &sample, float remaining_time = 0.0,
 		GuideInfoConstPtr guide_info = nullptr, bool guiding = false
     ) const override;
 
-    virtual float pdf(PathSampleGenerator &sampler, const Ray &ray, bool startOnSurface, bool endOnSurface) const override;
+    float pdf(PathSampleGenerator &sampler, const Ray &ray, bool startOnSurface, bool endOnSurface) const override;
     
-    virtual float elliptical_sample(
+    float elliptical_sample(
         const Ray& ray, PathSampleGenerator &sampler, MediumSample& deter_mi, EllipseConstPtr ell_info
     ) const override;
 

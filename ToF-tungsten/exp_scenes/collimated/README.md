@@ -1,0 +1,1 @@
+The settings in this scene is in-line-width that of [paper (supp): a boundary migration model for imaging within volumetric scattering media](https://static-content.springer.com/esm/art%3A10.1038%2Fs41467-022-30948-7/MediaObjects/41467_2022_30948_MOESM1_ESM.pdf). The diffusion slab experiments.

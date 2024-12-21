@@ -54,7 +54,7 @@ public:
 
     void initTransientBuffer(int nframes);
 
-    /// @brief  Temporal path reused transient recording (originally not supported, by authors of DARTS paper)
+    /// @brief  Temporal path reused transient recording (originally not supported, by Qianyue He)
     void addTransientSample(T* pixel_transient, Vec2u pixel);
 
     inline T operator[](uint32 idx) const
@@ -64,17 +64,17 @@ public:
 
     void save() const;
 
-    void deserialize(InputStreamHandle &in) const
+    void deserialize(InputStreamHandle &) const
     {
         throw "Not implemented in transient buffer";
     }
 
-    void serialize(OutputStreamHandle &out) const
+    void serialize(OutputStreamHandle &) const
     {
         throw "Not implemented in transient buffer";
     }
 
-    inline T variance(int x, int y) const
+    inline T variance(int, int) const
     {
         printf("Warning: variance recording is not implemented in transient buffer, please do not call this function.\n");
         return _transients[0];

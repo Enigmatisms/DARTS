@@ -43,6 +43,7 @@ struct PhotonMapSettings : public TraceSettings
     bool enable_elliptical;     // enable elliptical sampling (might only works for point method)
     bool frustum_culling;       // Camera frustum culling
     bool strict_time_width;     // enable time selection (in scenes with negligible specular effect)
+    bool reuse_path_dir;        // Whether to reuse path direction for elliptical sampling direction
 
     PhotonMapSettings()
     : photonCount(1000000),
@@ -69,7 +70,8 @@ struct PhotonMapSettings : public TraceSettings
       enable_guiding(false),
       enable_elliptical(false),
       frustum_culling(false),
-      strict_time_width(false)
+      strict_time_width(false),
+      reuse_path_dir(true)
     {
     }
 
@@ -124,8 +126,9 @@ struct PhotonMapSettings : public TraceSettings
         value.getField("enable_elliptical", enable_elliptical);
         value.getField("strict_time_width", strict_time_width);
         value.getField("frustum_culling", frustum_culling);
-        printf("DARTS support: DA-sampling: (%d) | elliptical sampling (%d) | strict mode (%d) | frustum culling (%d)\n", 
-                                int(enable_guiding), int(enable_elliptical), int(strict_time_width), int(frustum_culling));
+        value.getField("reuse_path_dir", reuse_path_dir);
+        printf("DARTS support: DA-sampling: (%d) | elliptical sampling (%d) | strict mode (%d) | frustum culling (%d) | dir reuse (%d)\n", 
+                                int(enable_guiding), int(enable_elliptical), int(strict_time_width), int(frustum_culling), int(reuse_path_dir));
 
         static const VolumePhotonType deltaTimeGateSupportedTypes [] = {
             VOLUME_BEAMS,
@@ -177,6 +180,7 @@ struct PhotonMapSettings : public TraceSettings
             "enable_elliptical", enable_elliptical,
             "strict_time_width", strict_time_width,
             "frustum_culling", frustum_culling,
+            "reuse_path_dir", reuse_path_dir,
         };
     }
 };

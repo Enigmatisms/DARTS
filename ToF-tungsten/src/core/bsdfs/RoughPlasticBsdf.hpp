@@ -21,7 +21,7 @@ class RoughPlasticBsdf : public Bsdf
     float _avgTransmittance;
     Vec3f _scaledSigmaA;
 
-    // Modification by Anonymous author: note that in pbrt, amplitude of specular reflection can be controlled
+    // Modification by Qianyue He: note that in pbrt, amplitude of specular reflection can be controlled
     // and is set to be 0.25 by default (0.25 * BRDF value * cosine weight)
     // In Tungsten, we will set _Ks to be 1.0 by default
     Vec3f _Ks;                      

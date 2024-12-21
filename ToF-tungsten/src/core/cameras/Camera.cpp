@@ -129,6 +129,11 @@ bool Camera::evalDirection(PathSampleGenerator &/*sampler*/, const PositionSampl
     return false;
 }
 
+bool Camera::canSplatOnScreen(const Vec3f& /*position*/) const
+{
+    return false;
+}
+
 float Camera::directionPdf(const PositionSample &/*point*/, const DirectionSample &/*direction*/) const
 {
     return 0.0f;

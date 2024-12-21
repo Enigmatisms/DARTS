@@ -1,6 +1,7 @@
 #ifndef PHOTONTRACER_HPP_
 #define PHOTONTRACER_HPP_
 
+#include <atomic>
 #include "PhotonMapSettings.hpp"
 #include "FrustumBinner.hpp"
 #include "PhotonRange.hpp"
@@ -111,6 +112,13 @@ class PhotonTracer : public TraceBase
     void clearCache();
 
 public:
+    static std::atomic<long> valid_cnt, all_cnt;
+    static std::atomic<uint64_t> kd_tree_time, kd_tree_cnt, query_func_time, query_func_cnt;
+    static std::atomic<bool> profile_output_flag;
+
+    ~PhotonTracer();
+
+public:
     PhotonTracer(TraceableScene *scene, const PhotonMapSettings &settings, uint32 threadId);
 
     void evalPrimaryRays(const PhotonBeam *beams, const PhotonPlane0D *planes0D, const PhotonPlane1D *planes1D,
@@ -129,7 +137,7 @@ public:
             PathPhotonRange &pathRange, PathSampleGenerator &sampler, 
             GuideInfoConstPtr sampling_info = nullptr, float bin_pdf = 0.0, float min_remaining_t = 0.0);
 protected:
-    inline bool frustumCulling(PathSampleGenerator &sampler, const Vec3f& photon_p, const Vec3f& cam_p) const ;
+    inline bool frustumCulling(const Vec3f& photon_p) const ;
 
     /**
      * Returns whether the current photon can fall into the desired time range (camera warped)

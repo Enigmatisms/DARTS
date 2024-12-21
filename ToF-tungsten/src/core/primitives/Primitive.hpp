@@ -201,7 +201,7 @@ public:
         return hasIntSpeedOfLight() || hasExtSpeedOfLight();
     }
 
-    bool getPoint(Vec3f& point) const
+    bool getPoint(Vec3f&) const
     {
         return false;
     }

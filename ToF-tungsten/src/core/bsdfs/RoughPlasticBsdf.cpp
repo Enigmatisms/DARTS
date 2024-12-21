@@ -23,8 +23,8 @@ RoughPlasticBsdf::RoughPlasticBsdf()
   _thickness(1.0f),
   _sigmaA(0.0f),
   _distribution("ggx"),
-  _Ks(1.0f),
-  _roughness(std::make_shared<ConstantTexture>(0.02f))
+  _roughness(std::make_shared<ConstantTexture>(0.02f)),
+  _Ks(1.0f)
 {
     _lobes = BsdfLobes(BsdfLobes::GlossyReflectionLobe | BsdfLobes::DiffuseReflectionLobe);
 }

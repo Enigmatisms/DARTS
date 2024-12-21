@@ -549,19 +549,18 @@ Vec3f TraceBase::estimateDirect(SurfaceScatterEvent &event,
 
 bool TraceBase::handleVolume(PathSampleGenerator &sampler, MediumSample &mediumSample,
            const Medium *&medium, int bounce, bool adjoint, bool enableLightSampling,
-           Ray &ray, Vec3f &throughput, Vec3f &emission, bool &wasSpecular, TransInfotPtr tof_info, bool skip_eval)
+           Ray &ray, Vec3f &throughput, Vec3f &emission, bool &wasSpecular, TransInfotPtr tof_info, EllipseConstPtr ell_info, bool skip_eval)
 {
     wasSpecular = !enableLightSampling;
 
     if (!skip_eval && !adjoint && enableLightSampling && bounce < _settings.maxBounces - 1) {
-        float path_time = 0;
         auto radiance = throughput * volumeEstimateDirect(sampler, mediumSample, medium, bounce + 1, ray, tof_info);
         if (tof_info && tof_info->valid()) radiance *= tof_info->bin_pdf;
         emission += radiance;
     }
 
     PhaseSample phaseSample;
-    if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample))
+    if (!mediumSample.phase->sample(sampler, ray.dir(), phaseSample, ell_info))
         return false;
 
     ray = ray.scatter(mediumSample.p, phaseSample.w, 0.0f);

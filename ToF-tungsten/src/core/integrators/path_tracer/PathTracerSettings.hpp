@@ -16,6 +16,7 @@ struct PathTracerSettings : public TraceSettings
     // DARTS related configurations
     bool enable_guiding;        // enable DA-based guiding
     bool enable_elliptical;     // enable elliptical sampling (might only works for point method)
+    bool enable_rr;             // enable russian roullete
 
     float transientTimeCenter;
     float transientTimeWidth;
@@ -33,6 +34,7 @@ struct PathTracerSettings : public TraceSettings
       includeSurfaces(true),
       enable_guiding(false),
       enable_elliptical(false),
+      enable_rr(false),
       frame_num(0)
     {
     }
@@ -69,13 +71,18 @@ struct PathTracerSettings : public TraceSettings
             else
                 printf("Warning: transient <start_time> not specified, using transientTimeBeg: %.4f\n", transientTimeBeg);
             transientTimeEnd = transientTimeBeg + float(frame_num) * transientTimeWidth;
+            invTransientTimeWidth = 1.f / transientTimeWidth;
             printf("Transient rendering is enabled, start t = %.4f, end t = %.4f, frame count: %d, width: %.4f\n", 
                         transientTimeBeg, transientTimeEnd, frame_num, transientTimeWidth);
         }
 
         value.getField("enable_guiding", enable_guiding);
         value.getField("enable_elliptical", enable_elliptical);
-        printf("DARTS support: DA-sampling: (%d) | elliptical sampling (%d)\n", int(enable_guiding), int(enable_elliptical));
+        if (enable_guiding || enable_elliptical)
+            enable_rr = false;
+        else
+            value.getField("enable_rr", enable_rr);
+        printf("DARTS support: DA-sampling: (%d) | elliptical sampling (%d) | enable rr (%d)\n", int(enable_guiding), int(enable_elliptical), int(enable_rr));
     }
 
     rapidjson::Value toJson(rapidjson::Document::AllocatorType &allocator) const
@@ -90,7 +97,8 @@ struct PathTracerSettings : public TraceSettings
             "transient_time_width", transientTimeWidth,
             "vaccum_speed_of_light", vaccumSpeedOfLight,
             "enable_guiding", enable_guiding,
-            "enable_elliptical", enable_elliptical
+            "enable_elliptical", enable_elliptical,
+            "enable_rr", enable_rr
         };
     }
 };

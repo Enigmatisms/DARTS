@@ -1,0 +1,132 @@
+{
+    "media": [
+        {
+            "name": "gas",
+            "phase_function": {
+                "type": "isotropic"
+            },
+            "max_bounces": 800,
+            "type": "homogeneous",
+            "sigma_s": 313.77,
+            "sigma_a": 3.3348,
+            "speed_of_light": 1.0
+        }
+    ],
+    "bsdfs": [
+        {
+            "name": "dark",
+            "albedo": 0.0,
+            "type": "lambert"
+        }
+    ],
+    "primitives": [
+        {
+            "name": "scattering",
+            "transform": {
+                "pos": [0, 0, 0],
+                "scale": [2, 2, 0.05]
+            },
+            "type": "cube",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "int_medium": "gas",
+            "bsdf": {
+                "albedo": 1,
+                "type": "forward"
+            }
+        },
+        {
+            "transform": {
+                "pos": [0, 0, 0],
+                "scale": [2.2, 2.2, 1]
+            },
+            "type": "cube",
+            "smooth": false,
+            "backface_culling": false,
+            "recompute_normals": false,
+            "bsdf": "dark"
+        },
+        {
+            "name": "light",
+            "transform": {
+                "position": [
+                    0, 0, -0.026
+                ],
+                "look_at": [0, 0, 0.02],
+                "up": [0, 1, 0]
+            },
+            "radius": 0.001,
+            "emission": [
+                10000, 10000, 10000
+            ],
+            "type": "collimated"
+        }
+    ],
+    "camera": {
+        "tonemap": "linear",
+        "resolution": [
+            32,
+            32
+        ],
+        "reconstruction_filter": "box",
+        "transform": {
+            "position": [
+                0, 0, 0.026
+            ],
+            "look_at": [0, 0, -0.02],
+            "up": [
+                0.0,
+                1.0,
+                0.0
+            ]
+        },
+        "medium": "gas",
+        "type": "pinhole",
+        "fov": 20
+    },
+    "integrator": {
+        "type": "progressive_transient_photon_map",
+        "include_surfaces": false,
+        "volume_photon_type": "points",
+        "low_order_scattering": true,
+        "min_bounces": 0,
+        "max_bounces": 800,
+        "enable_consistency_checks": true,
+        "enable_two_sided_shading": true,
+        "gather_radius": 0.0002,
+        "photon_count": 4e4,
+        "volume_photon_count": 3e6,
+        "gather_photon_count": 20,
+        "alpha": 0.85,
+        "volume_alpha": 0.85,
+        "fixed_volume_radius": false,
+        "volume_gather_radius": 0.0003,
+        "start_time" : 0.05,
+        "transient_time_width" : 0.001,
+        "frame_num" : 500,
+        "delta_time_gate": false,
+        "exclude_non_mis": false,
+        "use_grid": false
+    },
+    "renderer": {
+        "output_file": "./transient.png",
+        "hdr_output_file": "./transient.pfm",
+        "overwrite_output_files": true,
+        "adaptive_sampling": false,
+        "enable_resume_render": false,
+        "stratified_sampler": false,
+        "scene_bvh": true,
+        "spp": 100000000,
+        "spp_step": 1,
+        "checkpoint_interval": "10000",
+        "timeout": "40",
+        "output_buffers": [
+            {
+                "type": "transients",
+                "ldr_output_file": "./outputs/images/result.png",
+                "hdr_output_file": "./outputs/transients/result.pfm"
+            }
+        ]
+    }
+}
