@@ -1,8 +1,16 @@
-### DARTS
+<div align="center">
 
----
+### ACM Transactions on Graphics 2024
+### (SIGGRAPH Asia 2024 Journal Track)
 
-> [He Q](https://github.com/Enigmatisms), [Du D](https://github.com/dongyu-du), Jiang H, et al. DARTS: Diffusion Approximated Residual Time Sampling for Time-of-flight Rendering in Homogeneous Scattering Media[J]. ACM Transactions on Graphics (TOG), 2024, 43(6): 1-14.
+## <a href="https://dl.acm.org/doi/10.1145/3687930">🎯 DARTS: Diffusion Approximated Residual Time Sampling for Time-of-flight Rendering in Homogeneous Scattering Media</a>
+
+[Qianyue He](https://github.com/Enigmatisms), [Dongyu Du](https://dongyu-du.github.io/), [Haitian Jiang](https://github.com/Enigmatisms/DARTS), [Xin Jin*](https://scholar.google.com.hk/citations?user=FTikW50AAAAJ&hl=zh-CN&oi=sra)
+
+[![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://darts-paper.github.io/DARTS-proj-page/)
+[![Paper PDF](https://img.shields.io/badge/Paper-PDF-red.svg)](https://dl.acm.org/doi/10.1145/3687930)
+[![Code License](https://img.shields.io/badge/license-MIT-blue)](https://github.com/Enigmatisms/DARTS?tab=MIT-1-ov-file#readme)
+</div>
 
 The code is composed of two renderers:
 
@@ -17,15 +25,21 @@ Compilation and using this code base can refer to the README in each folder. The
 - Added `GuidedHomogeneousMedium` class, `IsotropicDAPhase` class and etc. which support our sampling methods.
 - Modified some of the BSDF implementation, so that Tungsten can have the same outputs as PBRT-v3 (Tungsten can have matched output as PBRT-v4 but not v3).
 
-You can refer to [Enigmatisms/AnalyticalGuiding]() repo to test the 2D and 1D numerical tests and interactive visualization (in DearPyGui and Taichi).
+You can refer to [Enigmatisms/AnalyticalGuiding](https://github.com/Enigmatisms/AnalyticalGuiding) repo to test the 2D and 1D numerical tests and interactive visualization (in DearPyGui and Taichi).
+
+---
+### Scene availability
+Check [this repo](https://github.com/Enigmatisms/DARTS-scenes) for GLOSSY DRAGON and STAIRCASE scene. For more test scenes mentioned in the supplementary document, open an issue and leave your e-mail for me so that I can send them to you.
 
 ---
 
 ### Rendering Results
 
+![image](https://github.com/user-attachments/assets/75041d18-c9c5-4935-8747-760d1fe665aa)
 
+![image](https://github.com/user-attachments/assets/e056af7d-610d-4d4c-9bf3-75119cc16bd6)
 
-
+![image](https://github.com/user-attachments/assets/50cdd855-aa27-4430-9458-0bef26e8d50a)
 
 ---
 
