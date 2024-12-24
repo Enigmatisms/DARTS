@@ -5,7 +5,7 @@
 
 ## <a href="https://dl.acm.org/doi/10.1145/3687930">🎯 DARTS: Diffusion Approximated Residual Time Sampling for Time-of-flight Rendering in Homogeneous Scattering Media</a>
 
-[Qianyue He](https://github.com/Enigmatisms), [Dongyu Du](https://dongyu-du.github.io/), [Haitian Jiang](https://github.com/Enigmatisms/DARTS), [Xin Jin*](https://scholar.google.com.hk/citations?user=FTikW50AAAAJ&hl=zh-CN&oi=sra)
+[Qianyue He](https://enigmatisms.github.io/owner-info/), [Dongyu Du](https://dongyu-du.github.io/), [Haitian Jiang](https://github.com/Enigmatisms/DARTS), [Xin Jin*](https://scholar.google.com.hk/citations?user=FTikW50AAAAJ&hl=zh-CN&oi=sra)
 
 [![Project Page](https://img.shields.io/badge/Project-Page-green.svg)](https://darts-paper.github.io/DARTS-proj-page/)
 [![Paper PDF](https://img.shields.io/badge/Paper-PDF-red.svg)](https://dl.acm.org/doi/10.1145/3687930)
